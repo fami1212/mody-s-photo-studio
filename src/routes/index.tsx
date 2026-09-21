@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
+import { CalendarDays, Camera, Copy, MessageCircle, Send, Sparkles } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { z } from "zod";
 
 import heroMody from "@/assets/hero-mody.jpg";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
 import gallery4 from "@/assets/gallery-4.jpg";
+import modyLogo from "@/assets/mody-logo-transparent.png";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,11 +21,11 @@ export const Route = createFileRoute("/")({
         content:
           "Portfolio de Mody, photographe : portraits, mode, rue et éditorial. Réservez votre séance.",
       },
-      { property: "og:title", content: "Mody — Photographe" },
+      { property: "og:title", content: "Mody Photography — Tarifs & réservation" },
       {
         property: "og:description",
         content:
-          "Portraits, mode, rue et éditorial — des images qui font s'arrêter le scroll.",
+          "Tarifs photo et vidéo de Mody à Casablanca, avec réservation dans l'app ou sur WhatsApp Pro.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -37,6 +42,25 @@ const disciplines = [
   { label: "Marque", dot: "text-lilac" },
 ];
 
+const WHATSAPP_NUMBER = "212645914716";
+const WHATSAPP_DISPLAY = "+212 6 45 91 47 16";
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+const socialLinks = [
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@modyphotographer?_r=1&_t=ZS-95pzf6ZAyDH",
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/moomojr?igsh=YmlmcHVwaTA4c3Rx&utm_source=qr",
+  },
+  {
+    label: "Snap",
+    href: "https://snapchat.com/t/5HuNVcAs",
+  },
+];
+
 const frames = [
   { src: gallery1, alt: "Portrait mode sous néons, contre un mur de briques", bg: "bg-pink/50" },
   { src: gallery2, alt: "Scène de rue au soleil couchant, cycliste et ombres longues", bg: "bg-butter/60" },
@@ -46,32 +70,130 @@ const frames = [
 
 const services = [
   {
-    title: "Journée portrait",
-    body: "Demi-journée de séance, conseils de stylisme et 30 images retouchées livrées dans une galerie privée.",
-    price: "à partir de 320 €",
+    title: "Studio & extérieurs",
+    body: "Séances rapides ou complètes, en studio ou dehors, avec sélection retouchée et livraison prête à publier.",
+    price: "à partir de 200dh",
     priceClass: "text-butter",
     cardClass: "bg-ink text-cream",
     bodyClass: "text-cream/70",
   },
   {
-    title: "Kit de marque",
-    body: "Produits, lifestyle et portraits de fondateurs accordés à votre palette et à votre voix.",
-    price: "à partir de 900 €",
+    title: "Mariages & baptêmes",
+    body: "Reportage photo pour les moments familiaux, avec déplacement partout sur Casablanca.",
+    price: "à partir de 800dh",
     priceClass: "text-cream",
     cardClass: "bg-tomato text-cream",
     bodyClass: "text-cream/80",
   },
   {
-    title: "Éditorial complet",
-    body: "Concept, équipe, repérage de lieux et direction artistique prête à imprimer, du début à la fin.",
-    price: "sur devis",
+    title: "Vidéo Réel",
+    body: "Un format court pensé pour TikTok, Instagram et Snap, dynamique et prêt pour les réseaux.",
+    price: "300dh",
     priceClass: "text-lilac",
     cardClass: "bg-card text-ink",
     bodyClass: "text-ink/70",
   },
 ];
 
+const pricingSections = [
+  {
+    title: "Mariages & Baptême",
+    note: "Déplacement partout sur Casablanca. Hors Casablanca, les frais de transport sont à prévoir.",
+    headerClass: "bg-foreground text-cream",
+    offers: [
+      { label: "30 Photos", price: "800dh" },
+      { label: "60 Photos", price: "1500dh" },
+      { label: "80 Photos", price: "2000dh" },
+      { label: "Video Réel", price: "300dh" },
+    ],
+  },
+  {
+    title: "Studio - Extérieurs",
+    note: "Pour les shootings extérieurs, les frais de transport sont à prévoir.",
+    headerClass: "bg-primary text-primary-foreground",
+    offers: [
+      { label: "4 Photos", price: "200dh" },
+      { label: "8 Photos", price: "400dh" },
+      { label: "10 Photos", price: "500dh" },
+      { label: "Video Réel", price: "300dh" },
+    ],
+  },
+];
+
+const allOffers = pricingSections.flatMap((section) =>
+  section.offers.map((offer) => `${offer.label} — ${section.title} — ${offer.price}`),
+);
+
+const initialReservation = {
+  nom: "",
+  telephone: "",
+  date: "",
+  formule: allOffers[0] ?? "",
+  message: "",
+};
+
+const reservationSchema = z.object({
+  nom: z.string().trim().min(2, "Ajoutez un nom complet.").max(80, "Le nom est trop long."),
+  telephone: z
+    .string()
+    .trim()
+    .regex(/^[+0-9 ().-]{8,24}$/, "Ajoutez un numéro de téléphone valide."),
+  date: z.string().trim().min(1, "Ajoutez une date ou une période." ).max(40, "La date est trop longue."),
+  formule: z.string().trim().min(1, "Choisissez une formule." ).max(140, "La formule est trop longue."),
+  message: z.string().trim().max(500, "Le message est trop long."),
+});
+
+function createWhatsappHref(formule: string, details?: typeof initialReservation) {
+  const lines = [
+    "Bonjour Mody, je veux réserver une séance photo.",
+    `Formule : ${formule || "à choisir"}`,
+    details?.nom.trim() ? `Nom : ${details.nom.trim()}` : "",
+    details?.telephone.trim() ? `Téléphone : ${details.telephone.trim()}` : "",
+    details?.date.trim() ? `Date souhaitée : ${details.date.trim()}` : "",
+    details?.message.trim() ? `Message : ${details.message.trim()}` : "",
+  ].filter(Boolean);
+
+  return `${WHATSAPP_URL}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
 function Index() {
+  const [reservation, setReservation] = useState(initialReservation);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"success" | "error">("success");
+
+  const whatsappHref = useMemo(
+    () => createWhatsappHref(reservation.formule, reservation),
+    [reservation],
+  );
+
+  function selectOffer(formule: string) {
+    setReservation((current) => ({ ...current, formule }));
+    setFeedback("");
+    document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleReservationSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const result = reservationSchema.safeParse(reservation);
+
+    if (!result.success) {
+      setFeedbackType("error");
+      setFeedback(result.error.issues[0]?.message ?? "Vérifiez les informations de réservation.");
+      return;
+    }
+
+    setReservation(result.data);
+    setFeedbackType("success");
+    setFeedback("Demande prête dans l'app. Vous pouvez aussi l'envoyer à Mody sur WhatsApp Pro.");
+  }
+
+  async function copyReservation() {
+    const text = decodeURIComponent(whatsappHref.split("text=")[1] ?? "");
+    await navigator.clipboard.writeText(text);
+    setFeedbackType("success");
+    setFeedback("La demande de réservation est copiée.");
+  }
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-background font-body text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
       <Header />
@@ -81,9 +203,11 @@ function Index() {
         <section className="relative overflow-hidden px-5 pb-16 pt-12 sm:pt-16">
           <div className="mx-auto max-w-[92rem]">
             <div className="mb-6 flex items-center gap-3">
-              <span className="grid size-3 rounded-full bg-primary" />
+              <span className="rounded-full bg-foreground px-4 py-2 ring-2 ring-foreground">
+                <img src={modyLogo} alt="Mody Photography" className="h-9 w-auto" />
+              </span>
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/70">
-                Photographe · Portraits & Éditorial
+                Photographe · Casablanca
               </span>
             </div>
             <h1 className="font-display text-[clamp(3.5rem,15vw,12rem)] uppercase leading-[0.85] tracking-tight text-balance">
@@ -115,15 +239,20 @@ function Index() {
                   marques et histoires de rue, racontées avec de la vraie
                   lumière et zéro remplissage.
                 </p>
-                <a
-                  href="#galerie"
-                  className="inline-flex items-center justify-between gap-3 rounded-2xl bg-primary px-6 py-4 text-lg font-bold text-primary-foreground ring-2 ring-foreground transition-transform hover:-translate-y-0.5"
-                >
-                  <span>Voir la galerie</span>
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-foreground text-primary">
-                    ↓
-                  </span>
-                </a>
+                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                  <Button asChild className="h-auto justify-between rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
+                    <a href="#reservation">
+                      <span>Réserver maintenant</span>
+                      <MessageCircle aria-hidden="true" />
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" className="h-auto justify-between rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
+                    <a href="#galerie">
+                      <span>Voir la galerie</span>
+                      <Camera aria-hidden="true" />
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -197,6 +326,167 @@ function Index() {
           </div>
         </section>
 
+        {/* Tarifs */}
+        <section id="tarifs" className="scroll-mt-20 border-y-2 border-foreground bg-foreground px-5 py-16 text-cream sm:py-20">
+          <div className="mx-auto max-w-[92rem]">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground">
+                  <Sparkles aria-hidden="true" className="size-4" />
+                  Tarifs officiels
+                </p>
+                <h2 className="font-display text-5xl uppercase leading-none text-balance sm:text-7xl">
+                  Tarifs Mody
+                </h2>
+              </div>
+              <p className="max-w-[35ch] text-pretty text-sm font-medium text-cream/75">
+                Choisissez une formule, puis réservez directement dans l'app ou avec le WhatsApp Pro de Mody.
+              </p>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              {pricingSections.map((section) => (
+                <article key={section.title} className="overflow-hidden rounded-3xl border-2 border-cream bg-card text-foreground">
+                  <div className={`${section.headerClass} p-6`}>
+                    <h3 className="font-display text-4xl uppercase leading-none sm:text-5xl">{section.title}</h3>
+                  </div>
+                  <div className="divide-y-2 divide-foreground/15">
+                    {section.offers.map((offer) => {
+                      const formule = `${offer.label} — ${section.title} — ${offer.price}`;
+                      return (
+                        <div key={formule} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                          <div className="flex items-center justify-between gap-5">
+                            <p className="text-xl font-bold">{offer.label}</p>
+                            <span className="h-2 min-w-16 flex-1 rounded-full bg-muted" />
+                            <p className="text-2xl font-bold text-primary">{offer.price}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="secondary" size="sm" className="rounded-full" onClick={() => selectOffer(formule)}>
+                              <CalendarDays aria-hidden="true" />
+                              App
+                            </Button>
+                            <Button asChild size="sm" className="rounded-full">
+                              <a href={createWhatsappHref(formule)} target="_blank" rel="noreferrer">
+                                <MessageCircle aria-hidden="true" />
+                                WhatsApp
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="border-t-2 border-foreground/15 p-5 text-sm font-medium text-muted-foreground">
+                    {section.note}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Reservation */}
+        <section id="reservation" className="scroll-mt-24 px-5 py-16 sm:py-20">
+          <div className="mx-auto grid max-w-[92rem] gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cream">
+                <Send aria-hidden="true" className="size-4" />
+                Réservation
+              </p>
+              <h2 className="font-display text-5xl uppercase leading-none text-balance sm:text-7xl">
+                Dans l'app ou WhatsApp Pro.
+              </h2>
+              <p className="mt-5 max-w-[42ch] text-pretty text-base leading-relaxed text-muted-foreground">
+                Le formulaire prépare la demande dans l'app. Le bouton WhatsApp ouvre le message prêt à envoyer au numéro professionnel de Mody.
+              </p>
+              <div className="mt-6 rounded-3xl bg-foreground p-6 text-cream ring-2 ring-foreground">
+                <img src={modyLogo} alt="Mody Photography" className="h-14 w-auto" />
+                <p className="mt-5 text-3xl font-bold">{WHATSAPP_DISPLAY}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleReservationSubmit} className="rounded-3xl border-2 border-foreground bg-card p-5 sm:p-7">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-sm font-bold">
+                  Nom
+                  <input
+                    value={reservation.nom}
+                    onChange={(event) => setReservation((current) => ({ ...current, nom: event.target.value }))}
+                    className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Votre nom"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Téléphone
+                  <input
+                    value={reservation.telephone}
+                    onChange={(event) => setReservation((current) => ({ ...current, telephone: event.target.value }))}
+                    className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="+212 ..."
+                  />
+                </label>
+              </div>
+
+              <label className="mt-4 grid gap-2 text-sm font-bold">
+                Formule
+                <select
+                  value={reservation.formule}
+                  onChange={(event) => setReservation((current) => ({ ...current, formule: event.target.value }))}
+                  className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {allOffers.map((offer) => (
+                    <option key={offer} value={offer}>
+                      {offer}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="mt-4 grid gap-2 text-sm font-bold">
+                Date souhaitée
+                <input
+                  value={reservation.date}
+                  onChange={(event) => setReservation((current) => ({ ...current, date: event.target.value }))}
+                  className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Ex : samedi prochain, 18h"
+                />
+              </label>
+
+              <label className="mt-4 grid gap-2 text-sm font-bold">
+                Message
+                <textarea
+                  value={reservation.message}
+                  onChange={(event) => setReservation((current) => ({ ...current, message: event.target.value }))}
+                  className="min-h-32 rounded-xl border-2 border-foreground bg-background px-4 py-3 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Lieu, style voulu, nombre de personnes..."
+                />
+              </label>
+
+              {feedback && (
+                <p className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${feedbackType === "success" ? "bg-mint text-cream" : "bg-primary text-primary-foreground"}`}>
+                  {feedback}
+                </p>
+              )}
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button type="submit" className="h-12 flex-1 rounded-full text-base">
+                  <Send aria-hidden="true" />
+                  Réserver dans l'app
+                </Button>
+                <Button asChild variant="secondary" className="h-12 flex-1 rounded-full text-base">
+                  <a href={whatsappHref} target="_blank" rel="noreferrer">
+                    <MessageCircle aria-hidden="true" />
+                    WhatsApp Pro
+                  </a>
+                </Button>
+                <Button type="button" variant="outline" className="h-12 rounded-full" onClick={copyReservation} aria-label="Copier la demande">
+                  <Copy aria-hidden="true" />
+                </Button>
+              </div>
+            </form>
+          </div>
+        </section>
+
         {/* Contact CTA */}
         <section id="contact" className="scroll-mt-20 px-5 pb-20">
           <div className="mx-auto max-w-[92rem] rounded-[2rem] bg-mint p-8 ring-2 ring-foreground sm:p-12">
@@ -213,37 +503,20 @@ function Index() {
                 </p>
               </div>
               <div className="flex flex-col gap-4">
-                <a
-                  href="mailto:hello@mody.photo"
-                  className="inline-flex items-center justify-center rounded-2xl bg-cream px-6 py-4 text-lg font-bold text-ink ring-2 ring-foreground transition-transform hover:-translate-y-0.5"
-                >
-                  hello@mody.photo
-                </a>
+                <Button asChild variant="secondary" className="h-auto rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
+                  <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">
+                    <MessageCircle aria-hidden="true" />
+                    {WHATSAPP_DISPLAY}
+                  </a>
+                </Button>
                 <div className="flex flex-wrap gap-3">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-cream transition-transform hover:-translate-y-0.5"
-                  >
-                    Instagram
-                  </a>
-                  <a
-                    href="https://behance.net"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-cream transition-transform hover:-translate-y-0.5"
-                  >
-                    Behance
-                  </a>
-                  <a
-                    href="https://vimeo.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-cream transition-transform hover:-translate-y-0.5"
-                  >
-                    Vimeo
-                  </a>
+                  {socialLinks.map((social) => (
+                    <Button key={social.label} asChild variant="outline" className="rounded-full bg-foreground text-cream hover:bg-primary hover:text-primary-foreground">
+                      <a href={social.href} target="_blank" rel="noreferrer">
+                        {social.label}
+                      </a>
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -270,10 +543,9 @@ function Header() {
     <header className="sticky top-0 z-40 border-b-2 border-foreground bg-background/85 backdrop-blur-sm">
       <div className="mx-auto flex max-w-[92rem] items-center justify-between px-5 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground ring-2 ring-foreground">
-            M
+          <span className="rounded-full bg-foreground px-3 py-1.5 ring-2 ring-foreground">
+            <img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" />
           </span>
-          <span className="text-xl font-bold tracking-tight">Mody</span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium sm:flex">
           <a href="#galerie" className="transition-colors hover:text-primary">
@@ -282,17 +554,19 @@ function Header() {
           <a href="#services" className="transition-colors hover:text-primary">
             Services
           </a>
+          <a href="#tarifs" className="transition-colors hover:text-primary">
+            Tarifs
+          </a>
           <a href="#contact" className="transition-colors hover:text-primary">
             Contact
           </a>
         </nav>
-        <a
-          href="mailto:hello@mody.photo"
-          className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-cream ring-1 ring-foreground transition-transform hover:-translate-y-0.5"
-        >
-          <span>Réserver une séance</span>
-          <span className="shrink-0">→</span>
-        </a>
+        <Button asChild className="rounded-full ring-1 ring-foreground transition-transform hover:-translate-y-0.5">
+          <a href="#reservation">
+            <span>Réserver</span>
+            <MessageCircle aria-hidden="true" />
+          </a>
+        </Button>
       </div>
     </header>
   );
