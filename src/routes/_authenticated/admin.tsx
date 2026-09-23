@@ -1,49 +1,64 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 
+import modyLogo from "@/assets/mody-logo-transparent.png";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Espace admin — Mody" },
-      { name: "description", content: "Espace privé de Mody : dossiers, photos et publications." },
+      { title: "Espace admin — Mody Photography" },
+      {
+        name: "description",
+        content: "Espace privé de Mody : dossiers photos, envois et publications de shootings.",
+      },
+      { property: "og:title", content: "Espace admin — Mody Photography" },
+      { property: "og:description", content: "Gestion des dossiers photos et des publications." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Espace admin — Mody" },
-      { property: "og:description", content: "Espace privé de gestion des shootings." },
     ],
   }),
-  component: AdminHome,
+  component: AdminLayout,
 });
 
-function AdminHome() {
-  const { user } = Route.useRouteContext();
+function AdminLayout() {
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-16">
-      <div className="mx-auto max-w-3xl">
-        <p className="text-sm text-muted-foreground">Connecté en tant que {user?.email}</p>
-        <h1 className="mt-2 text-4xl font-bold text-foreground">Espace admin</h1>
-        <p className="mt-4 text-muted-foreground">
-          Les dossiers, l'envoi de photos et les publications arrivent ici.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center rounded-md border border-input px-4 py-2 text-sm font-medium"
-          >
-            Voir le site
+    <div className="min-h-screen bg-background font-body text-foreground">
+      <header className="sticky top-0 z-40 border-b-2 border-foreground bg-background/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-[92rem] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <Link to="/" className="rounded-full bg-foreground px-3 py-1.5">
+            <img src={modyLogo} alt="Mody Photography" className="h-6 w-auto" />
           </Link>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/";
-            }}
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
+          <nav className="order-3 flex w-full gap-2 overflow-x-auto text-sm font-bold sm:order-none sm:w-auto">
+            <Link
+              to="/admin/dossiers"
+              className="whitespace-nowrap rounded-full border-2 border-foreground px-4 py-2"
+              activeProps={{ className: "bg-foreground text-cream" }}
+            >
+              Dossiers
+            </Link>
+            <Link
+              to="/admin/publications"
+              className="whitespace-nowrap rounded-full border-2 border-foreground px-4 py-2"
+              activeProps={{ className: "bg-foreground text-cream" }}
+            >
+              Publications
+            </Link>
+          </nav>
+          <Button variant="outline" className="rounded-full" onClick={signOut}>
             Se déconnecter
-          </button>
+          </Button>
         </div>
-      </div>
-    </main>
+      </header>
+      <Outlet />
+    </div>
   );
 }
