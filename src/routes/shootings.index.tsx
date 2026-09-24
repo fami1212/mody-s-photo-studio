@@ -5,7 +5,7 @@ import modyLogo from "@/assets/mody-logo-transparent.png";
 import { Button } from "@/components/ui/button";
 import { listPublishedPosts } from "@/lib/gallery.functions";
 
-export const Route = createFileRoute("/shootings")({
+export const Route = createFileRoute("/shootings/")({
   loader: () => listPublishedPosts(),
   head: () => ({
     meta: [
