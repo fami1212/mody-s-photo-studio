@@ -13,6 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as PartageTokenRouteImport } from './routes/partage.$token'
+import { Route as ShootingsIndexRouteImport } from './routes/shootings.index'
+import { Route as ShootingsSlugRouteImport } from './routes/shootings.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminPublicationsRouteImport } from './routes/_authenticated/admin.publications'
@@ -36,6 +39,21 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PartageTokenRoute = PartageTokenRouteImport.update({
+  id: '/partage/$token',
+  path: '/partage/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShootingsIndexRoute = ShootingsIndexRouteImport.update({
+  id: '/shootings/',
+  path: '/shootings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShootingsSlugRoute = ShootingsSlugRouteImport.update({
+  id: '/shootings/$slug',
+  path: '/shootings/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -58,6 +76,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/partage/$token': typeof PartageTokenRoute
+  '/shootings/$slug': typeof ShootingsSlugRoute
+  '/shootings/': typeof ShootingsIndexRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -65,6 +86,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/partage/$token': typeof PartageTokenRoute
+  '/shootings/$slug': typeof ShootingsSlugRoute
+  '/shootings': typeof ShootingsIndexRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -75,6 +99,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/partage/$token': typeof PartageTokenRoute
+  '/shootings/$slug': typeof ShootingsSlugRoute
+  '/shootings/': typeof ShootingsIndexRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -85,17 +112,31 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/partage/$token'
+    | '/shootings/$slug'
+    | '/shootings/'
     | '/admin/dossiers'
     | '/admin/publications'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/admin/dossiers' | '/admin/publications' | '/admin'
+  to:
+    | '/'
+    | '/auth'
+    | '/partage/$token'
+    | '/shootings/$slug'
+    | '/shootings'
+    | '/admin/dossiers'
+    | '/admin/publications'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/partage/$token'
+    | '/shootings/$slug'
+    | '/shootings/'
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/publications'
     | '/_authenticated/admin/'
@@ -105,6 +146,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PartageTokenRoute: typeof PartageTokenRoute
+  ShootingsSlugRoute: typeof ShootingsSlugRoute
+  ShootingsIndexRoute: typeof ShootingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -136,6 +180,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/partage/$token': {
+      id: '/partage/$token'
+      path: '/partage/$token'
+      fullPath: '/partage/$token'
+      preLoaderRoute: typeof PartageTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shootings/': {
+      id: '/shootings/'
+      path: '/shootings'
+      fullPath: '/shootings/'
+      preLoaderRoute: typeof ShootingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shootings/$slug': {
+      id: '/shootings/$slug'
+      path: '/shootings/$slug'
+      fullPath: '/shootings/$slug'
+      preLoaderRoute: typeof ShootingsSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -191,6 +256,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PartageTokenRoute: PartageTokenRoute,
+  ShootingsSlugRoute: ShootingsSlugRoute,
+  ShootingsIndexRoute: ShootingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

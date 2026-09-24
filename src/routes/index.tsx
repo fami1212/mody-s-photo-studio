@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
-import { CalendarDays, Camera, Copy, MessageCircle, Send, Sparkles } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, CalendarDays, Camera, Copy, LockKeyhole, MessageCircle, Send, Sparkles } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
@@ -11,8 +10,10 @@ import gallery3 from "@/assets/gallery-3.jpg";
 import gallery4 from "@/assets/gallery-4.jpg";
 import modyLogo from "@/assets/mody-logo-transparent.png";
 import { Button } from "@/components/ui/button";
+import { listRecentPublishedPhotos } from "@/lib/gallery.functions";
 
 export const Route = createFileRoute("/")({
+  loader: () => listRecentPublishedPhotos(),
   head: () => ({
     meta: [
       { title: "Mody — Photographe" },
@@ -157,6 +158,7 @@ function createWhatsappHref(formule: string, details?: typeof initialReservation
 }
 
 function Index() {
+  const { photos: publishedPhotos } = Route.useLoaderData();
   const [reservation, setReservation] = useState(initialReservation);
   const [feedback, setFeedback] = useState("");
   const [feedbackType, setFeedbackType] = useState<"success" | "error">("success");
@@ -210,6 +212,9 @@ function Index() {
                 Photographe · Casablanca
               </span>
             </div>
+            <p className="mb-5 max-w-3xl font-display text-2xl uppercase leading-none text-primary sm:text-4xl">
+              Every shoot is a masterpiece
+            </p>
             <h1 className="font-display text-[clamp(3.5rem,15vw,12rem)] uppercase leading-[0.85] tracking-tight text-balance">
               <span className="rise block">Mody</span>
               <span className="rise block" style={{ animationDelay: "0.08s" }}>
@@ -292,21 +297,32 @@ function Index() {
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {frames.map((frame) => (
-                <figure
-                  key={frame.src}
-                  className={`group w-full overflow-hidden rounded-2xl ${frame.bg} photo-frame`}
-                >
-                  <img
-                    src={frame.src}
-                    alt={frame.alt}
-                    loading="lazy"
-                    width={768}
-                    height={1024}
-                    className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                  />
-                </figure>
-              ))}
+              {(publishedPhotos.length > 0 ? publishedPhotos : frames).slice(0, 8).map((frame) => {
+                const isPublished = "url" in frame;
+                const image = isPublished ? frame.url : frame.src;
+                const content = (
+                  <figure className={`group w-full overflow-hidden rounded-2xl ${isPublished ? "bg-muted" : frame.bg} photo-frame`}>
+                    <img
+                      src={image}
+                      alt={isPublished ? "Shooting récent de Mody" : frame.alt}
+                      loading="lazy"
+                      width={768}
+                      height={1024}
+                      className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                  </figure>
+                );
+                return isPublished ? (
+                  <Link key={frame.id} to="/shootings/$slug" params={{ slug: frame.slug }}>{content}</Link>
+                ) : (
+                  <div key={frame.src}>{content}</div>
+                );
+              })}
+            </div>
+            <div className="mt-8 flex justify-end">
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/shootings">Tous les shootings <ArrowRight aria-hidden="true" /></Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -387,8 +403,8 @@ function Index() {
 
         {/* Reservation */}
         <section id="reservation" className="scroll-mt-24 px-5 py-16 sm:py-20">
-          <div className="mx-auto grid max-w-[92rem] gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-            <div>
+          <div className="mx-auto grid min-w-0 max-w-[92rem] gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
+            <div className="min-w-0">
               <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cream">
                 <Send aria-hidden="true" className="size-4" />
                 Réservation
@@ -401,18 +417,18 @@ function Index() {
               </p>
               <div className="mt-6 rounded-3xl bg-foreground p-6 text-cream ring-2 ring-foreground">
                 <img src={modyLogo} alt="Mody Photography" className="h-14 w-auto" />
-                <p className="mt-5 text-3xl font-bold">{WHATSAPP_DISPLAY}</p>
+                <p className="mt-5 break-words text-xl font-bold sm:text-3xl">{WHATSAPP_DISPLAY}</p>
               </div>
             </div>
 
-            <form onSubmit={handleReservationSubmit} className="rounded-3xl border-2 border-foreground bg-card p-5 sm:p-7">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <form onSubmit={handleReservationSubmit} className="min-w-0 rounded-3xl border-2 border-foreground bg-card p-4 sm:p-7">
+              <div className="grid min-w-0 gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-bold">
                   Nom
                   <input
                     value={reservation.nom}
                     onChange={(event) => setReservation((current) => ({ ...current, nom: event.target.value }))}
-                    className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Votre nom"
                   />
                 </label>
@@ -421,7 +437,7 @@ function Index() {
                   <input
                     value={reservation.telephone}
                     onChange={(event) => setReservation((current) => ({ ...current, telephone: event.target.value }))}
-                    className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                     placeholder="+212 ..."
                   />
                 </label>
@@ -432,7 +448,7 @@ function Index() {
                 <select
                   value={reservation.formule}
                   onChange={(event) => setReservation((current) => ({ ...current, formule: event.target.value }))}
-                  className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary sm:px-4 sm:text-base"
                 >
                   {allOffers.map((offer) => (
                     <option key={offer} value={offer}>
@@ -447,7 +463,7 @@ function Index() {
                 <input
                   value={reservation.date}
                   onChange={(event) => setReservation((current) => ({ ...current, date: event.target.value }))}
-                  className="h-12 rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Ex : samedi prochain, 18h"
                 />
               </label>
@@ -457,7 +473,7 @@ function Index() {
                 <textarea
                   value={reservation.message}
                   onChange={(event) => setReservation((current) => ({ ...current, message: event.target.value }))}
-                  className="min-h-32 rounded-xl border-2 border-foreground bg-background px-4 py-3 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  className="min-h-32 min-w-0 w-full resize-y rounded-xl border-2 border-foreground bg-background px-4 py-3 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Lieu, style voulu, nombre de personnes..."
                 />
               </label>
@@ -468,12 +484,12 @@ function Index() {
                 </p>
               )}
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Button type="submit" className="h-12 flex-1 rounded-full text-base">
+              <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <Button type="submit" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base">
                   <Send aria-hidden="true" />
                   Réserver dans l'app
                 </Button>
-                <Button asChild variant="secondary" className="h-12 flex-1 rounded-full text-base">
+                <Button asChild variant="secondary" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base">
                   <a href={whatsappHref} target="_blank" rel="noreferrer">
                     <MessageCircle aria-hidden="true" />
                     WhatsApp Pro
@@ -481,6 +497,7 @@ function Index() {
                 </Button>
                 <Button type="button" variant="outline" className="h-12 rounded-full" onClick={copyReservation} aria-label="Copier la demande">
                   <Copy aria-hidden="true" />
+                  <span className="md:hidden">Copier la demande</span>
                 </Button>
               </div>
             </form>
@@ -529,9 +546,7 @@ function Index() {
           <p className="text-sm font-medium text-muted-foreground">
             © 2026 Mody Photographie
           </p>
-          <p className="text-sm font-medium text-muted-foreground">
-            Shot with patience &amp; good coffee.
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">Every shoot is a masterpiece.</p>
         </div>
       </footer>
     </div>
@@ -548,6 +563,7 @@ function Header() {
           </span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium sm:flex">
+          <Link to="/shootings" className="transition-colors hover:text-primary">Shootings</Link>
           <a href="#galerie" className="transition-colors hover:text-primary">
             Galerie
           </a>
@@ -561,12 +577,14 @@ function Header() {
             Contact
           </a>
         </nav>
-        <Button asChild className="rounded-full ring-1 ring-foreground transition-transform hover:-translate-y-0.5">
-          <a href="#reservation">
-            <span>Réserver</span>
-            <MessageCircle aria-hidden="true" />
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="icon" className="hidden rounded-full lg:inline-flex" title="Espace Mody">
+            <Link to="/admin" aria-label="Ouvrir l'espace Mody"><LockKeyhole aria-hidden="true" /></Link>
+          </Button>
+          <Button asChild className="rounded-full ring-1 ring-foreground transition-transform hover:-translate-y-0.5">
+            <a href="#reservation"><span>Réserver</span><MessageCircle aria-hidden="true" /></a>
+          </Button>
+        </div>
       </div>
     </header>
   );
