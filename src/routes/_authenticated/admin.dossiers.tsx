@@ -9,13 +9,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { PHOTOS_BUCKET, randomToken, signPreviewUrls, slugify } from "@/lib/admin-storage";
+import { createVariants, optimizeExisting } from "@/lib/image-variants";
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
+  head: () => ({ meta: [{ title: "Dossiers — Admin Mody" }, { name: "robots", content: "noindex" }] }),
   component: FoldersPage,
 });
 
 type Folder = { id: string; name: string; description: string | null; cover_photo_id: string | null };
-type Photo = { id: string; storage_path: string; file_name: string | null; position: number };
+type Photo = {
+  id: string;
+  storage_path: string;
+  thumb_path: string | null;
+  display_path: string | null;
+  file_name: string | null;
+  position: number;
+};
 type ShareLink = {
   id: string;
   token: string;
@@ -52,7 +61,7 @@ function FoldersPage() {
     const [{ data: rows }, { data: shares }] = await Promise.all([
       supabase
         .from("photos")
-        .select("id, storage_path, file_name, position")
+        .select("id, storage_path, thumb_path, display_path, file_name, position")
         .eq("folder_id", folderId)
         .order("position", { ascending: true }),
       supabase
@@ -64,7 +73,8 @@ function FoldersPage() {
     const list = rows ?? [];
     setPhotos(list);
     setLinks(shares ?? []);
-    setUrls(await signPreviewUrls(list.map((p) => p.storage_path)));
+    const signed = await signPreviewUrls(list.map((p) => p.thumb_path ?? p.storage_path));
+    setUrls(Object.fromEntries(list.map((p) => [p.storage_path, signed[p.thumb_path ?? p.storage_path]])));
   }, []);
 
   useEffect(() => {
@@ -117,20 +127,31 @@ function FoldersPage() {
     if (!window.confirm(`Supprimer « ${folder.name} » et toutes ses photos ?`)) return;
     const { data: rows } = await supabase
       .from("photos")
-      .select("storage_path")
+      .select("id, storage_path, thumb_path, display_path")
       .eq("folder_id", folder.id);
-    if (rows?.length) {
-      await supabase.storage.from(PHOTOS_BUCKET).remove(rows.map((r) => r.storage_path));
+    const ids = (rows ?? []).map((r) => r.id);
+    await supabase.from("folders").update({ cover_photo_id: null }).eq("id", folder.id);
+    await supabase.from("share_links").delete().eq("folder_id", folder.id);
+    await supabase.from("posts").update({ folder_id: null }).eq("folder_id", folder.id);
+    if (ids.length) {
+      await supabase.from("post_photos").delete().in("photo_id", ids);
+      await supabase.from("posts").update({ cover_photo_id: null }).in("cover_photo_id", ids);
+      await supabase.from("photos").delete().eq("folder_id", folder.id);
     }
     const { error } = await supabase.from("folders").delete().eq("id", folder.id);
     if (error) return toast.error(error.message);
+    if (rows?.length) {
+      await supabase.storage
+        .from(PHOTOS_BUCKET)
+        .remove(rows.flatMap((r) => [r.storage_path, r.thumb_path, r.display_path]).filter(Boolean) as string[]);
+    }
     setFolders((current) => current.filter((f) => f.id !== folder.id));
     setActiveId((current) => (current === folder.id ? null : current));
     toast.success("Dossier supprimé.");
   }
 
   async function uploadFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
+    const files = Array.from(event.target.files ?? []).filter((f) => f.type.startsWith("image/"));
     event.target.value = "";
     if (!activeId || files.length === 0) return;
     setUploading(true);
@@ -138,18 +159,24 @@ function FoldersPage() {
     let added = 0;
 
     for (const file of files) {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const ext = (file.name.split(".").pop()?.toLowerCase() ?? "jpg").replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
       const path = `${activeId}/${crypto.randomUUID()}-${slugify(file.name) || "photo"}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from(PHOTOS_BUCKET)
-        .upload(path, file, { contentType: file.type || "image/jpeg" });
+        .upload(path, file, { contentType: file.type || "image/jpeg", cacheControl: "31536000" });
       if (uploadError) {
         toast.error(`${file.name} : ${uploadError.message}`);
         continue;
       }
+      let variants = {};
+      try {
+        variants = await createVariants(file, path);
+      } catch {
+        // original still usable
+      }
       const { error } = await supabase
         .from("photos")
-        .insert({ folder_id: activeId, storage_path: path, file_name: file.name, position });
+        .insert({ folder_id: activeId, storage_path: path, file_name: file.name.slice(0, 200), position, ...variants });
       if (error) {
         toast.error(error.message);
         continue;
@@ -163,10 +190,27 @@ function FoldersPage() {
     await loadFolderContent(activeId);
   }
 
+  async function optimizeOld() {
+    if (!activeId) return;
+    const todo = photos.filter((p) => !p.thumb_path);
+    if (todo.length === 0) return toast.info("Toutes les photos sont déjà optimisées.");
+    setUploading(true);
+    const n = await optimizeExisting(todo);
+    setUploading(false);
+    toast.success(`${n} photo(s) optimisée(s).`);
+    await loadFolderContent(activeId);
+  }
+
   async function deletePhoto(photo: Photo) {
-    await supabase.storage.from(PHOTOS_BUCKET).remove([photo.storage_path]);
+    if (!window.confirm("Supprimer cette photo ?")) return;
+    await supabase.from("post_photos").delete().eq("photo_id", photo.id);
+    await supabase.from("posts").update({ cover_photo_id: null }).eq("cover_photo_id", photo.id);
+    await supabase.from("folders").update({ cover_photo_id: null }).eq("cover_photo_id", photo.id);
     const { error } = await supabase.from("photos").delete().eq("id", photo.id);
     if (error) return toast.error(error.message);
+    await supabase.storage
+      .from(PHOTOS_BUCKET)
+      .remove([photo.storage_path, photo.thumb_path, photo.display_path].filter(Boolean) as string[]);
     setPhotos((current) => current.filter((p) => p.id !== photo.id));
   }
 
@@ -336,6 +380,11 @@ function FoldersPage() {
                     disabled={uploading}
                   />
                 </label>
+                {photos.some((p) => !p.thumb_path) && (
+                  <Button type="button" variant="outline" className="rounded-full" onClick={optimizeOld} disabled={uploading}>
+                    Optimiser les anciennes photos
+                  </Button>
+                )}
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
