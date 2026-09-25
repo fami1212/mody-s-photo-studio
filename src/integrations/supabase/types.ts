@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          event_date: string | null
+          id: string
+          location: string | null
+          message: string | null
+          name: string
+          offer: string | null
+          phone: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          message?: string | null
+          name: string
+          offer?: string | null
+          phone: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          message?: string | null
+          name?: string
+          offer?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       folders: {
         Row: {
           cover_photo_id: string | null
@@ -52,27 +97,39 @@ export type Database = {
       photos: {
         Row: {
           created_at: string
+          display_path: string | null
           file_name: string | null
           folder_id: string
+          height: number | null
           id: string
           position: number
           storage_path: string
+          thumb_path: string | null
+          width: number | null
         }
         Insert: {
           created_at?: string
+          display_path?: string | null
           file_name?: string | null
           folder_id: string
+          height?: number | null
           id?: string
           position?: number
           storage_path: string
+          thumb_path?: string | null
+          width?: number | null
         }
         Update: {
           created_at?: string
+          display_path?: string | null
           file_name?: string | null
           folder_id?: string
+          height?: number | null
           id?: string
           position?: number
           storage_path?: string
+          thumb_path?: string | null
+          width?: number | null
         }
         Relationships: [
           {
@@ -176,6 +233,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          created_at: string
+          id: number
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          key: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          key?: string
+        }
+        Relationships: []
       }
       share_links: {
         Row: {

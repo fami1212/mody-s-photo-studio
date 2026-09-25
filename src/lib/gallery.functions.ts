@@ -1,12 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
-const SIGNED_TTL = 60 * 60; // 1h
+const slugSchema = z.object({ slug: z.string().trim().min(1).max(120).regex(/^[a-z0-9-]+$/) });
+const tokenSchema = z.object({ token: z.string().trim().min(16).max(64).regex(/^[A-Za-z0-9_-]+$/) });
+
+const SIGNED_TTL = 60 * 60 * 24; // 24h
 
 type PublicPhoto = { id: string; url: string; downloadUrl?: string; fileName?: string };
 
 async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+
+function pick(
+  photo: { storage_path: string; thumb_path?: string | null; display_path?: string | null },
+  kind: "thumb" | "display",
+): string {
+  return (kind === "thumb" ? photo.thumb_path : photo.display_path) ?? photo.display_path ?? photo.storage_path;
 }
 
 async function signPaths(
@@ -38,7 +49,7 @@ export const listRecentPublishedPhotos = createServerFn({ method: "GET" }).handl
 
   const { data: links } = await admin
     .from("post_photos")
-    .select("post_id, photo_id, position, photos(id, storage_path)")
+    .select("post_id, photo_id, position, photos(id, storage_path, thumb_path, display_path, width, height)")
     .in(
       "post_id",
       posts.map((p) => p.id),
@@ -47,14 +58,14 @@ export const listRecentPublishedPhotos = createServerFn({ method: "GET" }).handl
     .limit(24);
 
   const rows = (links ?? []).filter((l) => l.photos);
-  const signed = await signPaths(rows.map((l) => (l.photos as any).storage_path));
+  const signed = await signPaths(rows.map((l) => pick((l.photos as any), "thumb")));
   const bySlug = new Map(posts.map((p) => [p.id, p.slug]));
 
   return {
     photos: rows
       .map((l) => {
         const photo = l.photos as any;
-        const url = signed[photo.storage_path];
+        const url = signed[pick(photo, "thumb")];
         return url
           ? { id: photo.id as string, url, slug: bySlug.get(l.post_id as string) ?? "" }
           : null;
@@ -76,10 +87,10 @@ export const listPublishedPosts = createServerFn({ method: "GET" }).handler(asyn
   const list = posts ?? [];
   const coverIds = list.map((p) => p.cover_photo_id).filter(Boolean) as string[];
   const { data: covers } = coverIds.length
-    ? await admin.from("photos").select("id, storage_path").in("id", coverIds)
+    ? await admin.from("photos").select("id, storage_path, thumb_path, display_path").in("id", coverIds)
     : { data: [] as { id: string; storage_path: string }[] };
-  const signed = await signPaths((covers ?? []).map((c) => c.storage_path));
-  const coverUrl = new Map((covers ?? []).map((c) => [c.id, signed[c.storage_path]]));
+  const signed = await signPaths((covers ?? []).map((c) => pick(c, "display")));
+  const coverUrl = new Map((covers ?? []).map((c) => [c.id, signed[pick(c, "display")]]));
 
   return {
     posts: list.map((p) => ({
@@ -96,7 +107,7 @@ export const listPublishedPosts = createServerFn({ method: "GET" }).handler(asyn
 
 /** One published shooting with its gallery. */
 export const getPublishedPost = createServerFn({ method: "GET" })
-  .inputValidator((data: { slug: string }) => data)
+  .inputValidator((data: unknown) => slugSchema.parse(data))
   .handler(async ({ data }) => {
     const admin = await getAdmin();
     const { data: post } = await admin
@@ -109,12 +120,12 @@ export const getPublishedPost = createServerFn({ method: "GET" })
 
     const { data: links } = await admin
       .from("post_photos")
-      .select("photo_id, position, photos(id, storage_path)")
+      .select("photo_id, position, photos(id, storage_path, thumb_path, display_path, width, height)")
       .eq("post_id", post.id)
       .order("position", { ascending: true });
 
     const rows = (links ?? []).filter((l) => l.photos);
-    const signed = await signPaths(rows.map((l) => (l.photos as any).storage_path));
+    const signed = await signPaths(rows.map((l) => pick(l.photos as any, "display")));
 
     return {
       post: {
@@ -127,8 +138,10 @@ export const getPublishedPost = createServerFn({ method: "GET" })
         photos: rows
           .map((l) => {
             const photo = l.photos as any;
-            const url = signed[photo.storage_path];
-            return url ? { id: photo.id as string, url } : null;
+            const url = signed[pick(photo, "display")];
+            return url
+              ? { id: photo.id as string, url, width: photo.width as number | null, height: photo.height as number | null }
+              : null;
           })
           .filter(Boolean) as PublicPhoto[],
       },
@@ -137,7 +150,7 @@ export const getPublishedPost = createServerFn({ method: "GET" })
 
 /** Client-facing shared folder (download links). */
 export const getSharedFolder = createServerFn({ method: "GET" })
-  .inputValidator((data: { token: string }) => data)
+  .inputValidator((data: unknown) => tokenSchema.parse(data))
   .handler(async ({ data }) => {
     const admin = await getAdmin();
     const { data: link } = await admin
@@ -160,13 +173,13 @@ export const getSharedFolder = createServerFn({ method: "GET" })
 
     const { data: photos } = await admin
       .from("photos")
-      .select("id, storage_path, file_name, position")
+      .select("id, storage_path, thumb_path, file_name, position")
       .eq("folder_id", folder.id)
       .order("position", { ascending: true });
 
     const rows = photos ?? [];
     const paths = rows.map((p) => p.storage_path);
-    const view = await signPaths(paths);
+    const view = await signPaths(rows.map((p) => pick(p, "thumb")));
     const download = await signPaths(paths, { download: true });
 
     return {
@@ -174,7 +187,7 @@ export const getSharedFolder = createServerFn({ method: "GET" })
       folder: { name: folder.name, description: folder.description, label: link.label },
       photos: rows.map((p) => ({
         id: p.id,
-        url: view[p.storage_path] ?? "",
+        url: view[pick(p, "thumb")] ?? "",
         downloadUrl: download[p.storage_path] ?? "",
         fileName: p.file_name ?? "photo.jpg",
       })),
