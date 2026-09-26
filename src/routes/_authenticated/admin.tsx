@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 
 import modyLogo from "@/assets/mody-logo-transparent.png";
 import { Button } from "@/components/ui/button";
+import { ChatPanel } from "@/components/ChatPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -52,6 +53,13 @@ function AdminLayout() {
             >
               Publications
             </Link>
+            <Link
+              to="/admin/reservations"
+              className="whitespace-nowrap rounded-full border-2 border-foreground px-4 py-2"
+              activeProps={{ className: "bg-foreground text-cream" }}
+            >
+              Réservations
+            </Link>
           </nav>
           <Button variant="outline" className="rounded-full" onClick={signOut}>
             Se déconnecter
@@ -59,6 +67,11 @@ function AdminLayout() {
         </div>
       </header>
       <Outlet />
+      <ChatPanel
+        mode="admin"
+        title="Assistant Mody"
+        greeting="Bonjour Mody ! Je peux résumer vos réservations, changer un statut, lister vos dossiers et liens, ou rédiger une publication ou une réponse WhatsApp."
+      />
     </div>
   );
 }
