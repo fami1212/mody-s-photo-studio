@@ -10,6 +10,8 @@ import gallery3 from "@/assets/gallery-3.jpg";
 import gallery4 from "@/assets/gallery-4.jpg";
 import modyLogo from "@/assets/mody-logo-transparent.png";
 import { Button } from "@/components/ui/button";
+import { ChatPanel } from "@/components/ChatPanel";
+import { submitBooking } from "@/lib/bookings.functions";
 import { listRecentPublishedPhotos } from "@/lib/gallery.functions";
 
 export const Route = createFileRoute("/")({
@@ -174,7 +176,7 @@ function Index() {
     document.getElementById("reservation")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function handleReservationSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleReservationSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const result = reservationSchema.safeParse(reservation);
 
@@ -185,8 +187,27 @@ function Index() {
     }
 
     setReservation(result.data);
-    setFeedbackType("success");
-    setFeedback("Demande prête dans l'app. Vous pouvez aussi l'envoyer à Mody sur WhatsApp Pro.");
+    try {
+      const res = await submitBooking({
+        data: {
+          name: result.data.nom,
+          phone: result.data.telephone,
+          offer: result.data.formule,
+          event_date: result.data.date,
+          message: result.data.message,
+        },
+      });
+      if (!res.ok) {
+        setFeedbackType("error");
+        setFeedback(res.error);
+        return;
+      }
+      setFeedbackType("success");
+      setFeedback("Demande envoyée à Mody ! Il vous recontacte vite. Vous pouvez aussi l'envoyer sur WhatsApp Pro.");
+    } catch {
+      setFeedbackType("error");
+      setFeedback("Envoi impossible pour le moment. Utilisez le bouton WhatsApp.");
+    }
   }
 
   async function copyReservation() {
@@ -199,6 +220,11 @@ function Index() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background font-body text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
       <Header />
+      <ChatPanel
+        mode="booking"
+        title="Réserver avec l'assistant"
+        greeting="Salut ! Je suis l'assistant de Mody. Je peux vous renseigner sur les tarifs et enregistrer votre réservation. Que souhaitez-vous shooter ?"
+      />
 
       <main>
         {/* Hero */}
