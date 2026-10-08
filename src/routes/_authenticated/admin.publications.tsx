@@ -85,8 +85,8 @@ function PostsPage() {
   }
 
   async function createPost(status: "draft" | "published") {
-    if (title.trim().length < 3) return toast.error("Ajoutez un titre.");
-    if (selected.length === 0) return toast.error("Choisissez au moins une photo.");
+    if (title.trim().length < 3) return void toast.error("Ajoutez un titre.");
+    if (selected.length === 0) return void toast.error("Choisissez au moins une photo.");
     setBusy(true);
     try {
       const slug = `${slugify(title)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -95,11 +95,11 @@ function PostsPage() {
         .insert({
           slug,
           title: title.trim(),
-          category,
+          category: category ?? null,
           body: body.trim() || null,
           shot_on: shotOn || null,
           folder_id: folderId || null,
-          cover_photo_id: selected[0],
+          cover_photo_id: selected[0] ?? null,
           status,
           published_at: status === "published" ? new Date().toISOString() : null,
         })
@@ -134,14 +134,14 @@ function PostsPage() {
         published_at: next === "published" ? new Date().toISOString() : null,
       })
       .eq("id", post.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setPosts((current) => current.map((p) => (p.id === post.id ? { ...p, status: next } : p)));
   }
 
   async function deletePost(post: Post) {
     if (!window.confirm(`Supprimer « ${post.title} » ?`)) return;
     const { error } = await supabase.from("posts").delete().eq("id", post.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setPosts((current) => current.filter((p) => p.id !== post.id));
   }
 

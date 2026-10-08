@@ -74,7 +74,7 @@ function FoldersPage() {
     setPhotos(list);
     setLinks(shares ?? []);
     const signed = await signPreviewUrls(list.map((p) => p.thumb_path ?? p.storage_path));
-    setUrls(Object.fromEntries(list.map((p) => [p.storage_path, signed[p.thumb_path ?? p.storage_path]])));
+    setUrls(Object.fromEntries(list.map((p) => [p.storage_path, signed[p.thumb_path ?? p.storage_path] ?? ""])));
   }, []);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ function FoldersPage() {
       .from("folders")
       .update({ name: next.trim() })
       .eq("id", folder.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setFolders((current) =>
       current.map((f) => (f.id === folder.id ? { ...f, name: next.trim() } : f)),
     );
@@ -139,7 +139,7 @@ function FoldersPage() {
       await supabase.from("photos").delete().eq("folder_id", folder.id);
     }
     const { error } = await supabase.from("folders").delete().eq("id", folder.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     if (rows?.length) {
       await supabase.storage
         .from(PHOTOS_BUCKET)
@@ -193,7 +193,7 @@ function FoldersPage() {
   async function optimizeOld() {
     if (!activeId) return;
     const todo = photos.filter((p) => !p.thumb_path);
-    if (todo.length === 0) return toast.info("Toutes les photos sont déjà optimisées.");
+    if (todo.length === 0) return void toast.info("Toutes les photos sont déjà optimisées.");
     setUploading(true);
     const n = await optimizeExisting(todo);
     setUploading(false);
@@ -207,7 +207,7 @@ function FoldersPage() {
     await supabase.from("posts").update({ cover_photo_id: null }).eq("cover_photo_id", photo.id);
     await supabase.from("folders").update({ cover_photo_id: null }).eq("cover_photo_id", photo.id);
     const { error } = await supabase.from("photos").delete().eq("id", photo.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     await supabase.storage
       .from(PHOTOS_BUCKET)
       .remove([photo.storage_path, photo.thumb_path, photo.display_path].filter(Boolean) as string[]);
@@ -220,7 +220,7 @@ function FoldersPage() {
       .from("folders")
       .update({ cover_photo_id: photo.id })
       .eq("id", activeId);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setFolders((current) =>
       current.map((f) => (f.id === activeId ? { ...f, cover_photo_id: photo.id } : f)),
     );
@@ -235,7 +235,7 @@ function FoldersPage() {
       .insert({ folder_id: activeId, token: randomToken(), label: label?.trim() || null })
       .select("id, token, label, is_active, expires_at")
       .single();
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setLinks((current) => [data, ...current]);
     toast.success("Lien de partage créé.");
   }
@@ -245,7 +245,7 @@ function FoldersPage() {
       .from("share_links")
       .update({ is_active: !link.is_active })
       .eq("id", link.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setLinks((current) =>
       current.map((l) => (l.id === link.id ? { ...l, is_active: !l.is_active } : l)),
     );
@@ -259,7 +259,7 @@ function FoldersPage() {
       .from("share_links")
       .update({ expires_at: expires })
       .eq("id", link.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setLinks((current) =>
       current.map((l) => (l.id === link.id ? { ...l, expires_at: expires } : l)),
     );
@@ -267,7 +267,7 @@ function FoldersPage() {
 
   async function deleteLink(link: ShareLink) {
     const { error } = await supabase.from("share_links").delete().eq("id", link.id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setLinks((current) => current.filter((l) => l.id !== link.id));
   }
 
