@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarDays, Camera, Copy, LockKeyhole, MessageCircle, Send, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Camera, Copy, LockKeyhole, MessageCircle, Send, Sparkles, ArrowUpRight, Menu, X, MapPin } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
@@ -18,11 +18,11 @@ export const Route = createFileRoute("/")({
   loader: () => listRecentPublishedPhotos(),
   head: () => ({
     meta: [
-      { title: "Mody — Photographe" },
+      { title: "Mody Photography — Photographe à Casablanca" },
       {
         name: "description",
         content:
-          "Portfolio de Mody, photographe : portraits, mode, rue et éditorial. Réservez votre séance.",
+          "Mody Photography à Casablanca. Découvrez les shootings, les tarifs studio, extérieurs et événements, et réservez votre séance.",
       },
       { property: "og:title", content: "Mody Photography — Tarifs & réservation" },
       {
@@ -74,7 +74,7 @@ const frames = [
 const services = [
   {
     title: "Studio & extérieurs",
-    body: "Séances rapides ou complètes, en studio ou dehors, avec sélection retouchée et livraison prête à publier.",
+    body: "Votre portrait, votre style. En studio ou à ciel ouvert, prenez le temps de vous révéler.",
     price: "à partir de 200dh",
     priceClass: "text-butter",
     cardClass: "bg-ink text-cream",
@@ -90,7 +90,7 @@ const services = [
   },
   {
     title: "Vidéo Réel",
-    body: "Un format court pensé pour TikTok, Instagram et Snap, dynamique et prêt pour les réseaux.",
+    body: "Le mouvement, l’énergie, l’instant. Un format court pour TikTok, Instagram et Snap.",
     price: "300dh",
     priceClass: "text-lilac",
     cardClass: "bg-card text-ink",
@@ -228,78 +228,34 @@ function Index() {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden px-5 pb-16 pt-12 sm:pt-16">
-          <div className="mx-auto max-w-[92rem]">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="rounded-full bg-foreground px-4 py-2 ring-2 ring-foreground">
-                <img src={modyLogo} alt="Mody Photography" className="h-9 w-auto" />
-              </span>
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/70">
-                Photographe · Casablanca
-              </span>
+        <section className="home-hero relative isolate overflow-hidden bg-ink text-cream">
+          <img src={heroMody} alt="Inspiration photographique : portrait avec un appareil argentique" width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
+          <div className="home-hero-shade absolute inset-0 -z-10" />
+          <div className="home-hero-content mx-auto flex h-full max-w-[92rem] flex-col justify-between px-5 py-8 sm:px-10 sm:py-10">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-xs font-bold uppercase">
+              <span className="flex min-w-0 items-center gap-2"><MapPin className="size-4 shrink-0" /> Casablanca, Maroc</span>
+              <span className="border-b border-cream/50 pb-1">Photo & vidéo</span>
             </div>
-            <p className="mb-5 max-w-3xl font-display text-2xl uppercase leading-none text-primary sm:text-4xl">
-              Every shoot is a masterpiece
-            </p>
-            <h1 className="font-display text-[clamp(3.5rem,15vw,12rem)] uppercase leading-[0.85] tracking-tight text-balance">
-              <span className="rise block">Mody</span>
-              <span className="rise block" style={{ animationDelay: "0.08s" }}>
-                shoote le
-              </span>
-              <span className="rise block" style={{ animationDelay: "0.16s" }}>
-                <span className="text-primary">fort</span> &amp; le
-              </span>
-              <span className="rise block" style={{ animationDelay: "0.24s" }}>
-                doux.
-              </span>
-            </h1>
-
-            <div className="mt-10 grid gap-6 lg:grid-cols-12">
-              <div className="lg:col-span-8">
-                <img
-                  src={heroMody}
-                  alt="Portrait éditorial de Mody, appareil argentique en main, lumière chaude de studio"
-                  width={1200}
-                  height={760}
-                  className="photo-frame aspect-[16/10] w-full rounded-3xl object-cover"
-                />
-              </div>
-              <div className="flex flex-col justify-between gap-6 lg:col-span-4">
-                <p className="max-w-[40ch] text-pretty text-base leading-relaxed text-foreground/80 sm:text-lg">
-                  Je cherche l'image qui fait s'arrêter le scroll — portraits,
-                  marques et histoires de rue, racontées avec de la vraie
-                  lumière et zéro remplissage.
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                  <Button asChild className="h-auto justify-between rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
-                    <a href="#reservation">
-                      <span>Réserver maintenant</span>
-                      <MessageCircle aria-hidden="true" />
-                    </a>
-                  </Button>
-                  <Button asChild variant="outline" className="h-auto justify-between rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
-                    <a href="#galerie">
-                      <span>Voir la galerie</span>
-                      <Camera aria-hidden="true" />
-                    </a>
-                  </Button>
-                </div>
+            <div className="max-w-2xl py-10">
+              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-butter"><span className="h-px w-8 bg-butter" /> Un regard. Votre histoire.</p>
+              <h1 className="home-hero-title rise font-display uppercase">Mody<br /><span className="text-butter">Photography.</span></h1>
+              <p className="mt-6 text-lg font-medium sm:text-2xl">Every shoot is a masterpiece</p>
+              <p className="mt-3 max-w-[35ch] text-sm leading-relaxed text-cream/80 sm:text-base">Du studio aux grands jours. Des images qui vous ressemblent, des moments qui restent.</p>
+              <div className="mt-8 grid max-w-sm gap-3 sm:flex sm:max-w-none">
+                <Button asChild className="h-12 rounded-full px-6 font-bold"><a href="#reservation">Réserver une séance <ArrowUpRight aria-hidden="true" /></a></Button>
+                <Button asChild variant="outline" className="h-12 rounded-full border-cream/60 bg-transparent px-6 text-cream hover:bg-cream hover:text-ink"><a href="#galerie">Explorer les images <ArrowRight aria-hidden="true" /></a></Button>
               </div>
             </div>
-          </div>
-
-          <div className="floaty absolute right-6 top-40 hidden size-24 place-items-center rounded-full bg-mint text-center text-[10px] font-bold uppercase leading-tight tracking-[0.15em] text-cream ring-2 ring-foreground md:grid lg:grid">
-            <span>
-              Dispo
-              <br />
-              2026
-            </span>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 border-t border-cream/30 pt-4 text-xs text-cream/80">
+              <span>Studio · Extérieurs · Mariages & baptêmes</span>
+              <a href="#galerie" aria-label="Découvrir la galerie" className="grid size-9 shrink-0 place-items-center rounded-full border border-cream/50"><ArrowRight className="size-4 rotate-90" /></a>
+            </div>
           </div>
         </section>
 
         {/* Discipline marquee */}
         <div className="border-y-2 border-foreground bg-foreground py-4">
-          <div className="mx-auto flex max-w-[92rem] flex-wrap items-center justify-center gap-x-8 gap-y-1 px-5 text-sm font-bold uppercase tracking-[0.2em] text-cream/80">
+          <div className="mx-auto flex max-w-[92rem] flex-wrap items-center justify-center gap-x-8 gap-y-1 px-5 text-sm font-bold uppercase tracking-normal text-cream/80">
             {disciplines.map((d, i) => (
               <span key={d.label} className="flex items-center gap-8">
                 {i > 0 && <span className={d.dot}>✦</span>}
@@ -312,36 +268,36 @@ function Index() {
         {/* Gallery */}
         <section id="galerie" className="scroll-mt-20 px-5 py-16 sm:py-20">
           <div className="mx-auto max-w-[92rem]">
-            <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-              <h2 className="font-display text-4xl uppercase leading-none tracking-tight text-balance sm:text-5xl">
-                Images choisies
-              </h2>
+            <div className="mb-10 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div><p className="mb-3 text-xs font-bold uppercase text-primary">01 / Le portfolio</p><h2 className="font-display text-4xl uppercase leading-none tracking-normal text-balance sm:text-5xl">
+                Le regard Mody.
+              </h2></div>
               <p className="max-w-[32ch] text-pretty text-sm font-medium text-muted-foreground">
-                Une sélection de travaux récents — tournée en argentique et en
-                numérique.
+                Portraits, instants de vie et regards singuliers. L’univers de Mody, en images.
               </p>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {(publishedPhotos.length > 0 ? publishedPhotos : frames).slice(0, 8).map((frame) => {
+            <div className="home-gallery grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+              {(publishedPhotos.length > 0 ? publishedPhotos : frames).slice(0, 8).map((frame, index) => {
                 const isPublished = "url" in frame;
                 const image = isPublished ? frame.url : frame.src;
                 const content = (
-                  <figure className={`group w-full overflow-hidden rounded-2xl ${isPublished ? "bg-muted" : frame.bg} photo-frame`}>
+                  <figure className={`group w-full overflow-hidden rounded-lg ${isPublished ? "bg-muted" : frame.bg} photo-frame`}>
                     <img
                       src={image}
                       alt={isPublished ? "Shooting récent de Mody" : frame.alt}
                       loading="lazy"
                       width={768}
                       height={1024}
-                      className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      decoding="async"
+                      className="home-gallery-image aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                     />
                   </figure>
                 );
                 return isPublished ? (
-                  <Link key={frame.id} to="/shootings/$slug" params={{ slug: frame.slug }}>{content}</Link>
+                  <Link className="home-gallery-item group min-w-0" key={frame.id} to="/shootings/$slug" params={{ slug: frame.slug }}>{content}<div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"><span className="text-sm font-bold">Shooting {String(index + 1).padStart(2, "0")}</span><ArrowUpRight className="size-4" /></div><p className="mt-1 text-xs text-muted-foreground">Voir la série</p></Link>
                 ) : (
-                  <div key={frame.src}>{content}</div>
+                  <div className="home-gallery-item min-w-0" key={frame.src}>{content}<div className="mt-3 flex justify-between text-sm font-bold"><span>{["Portrait", "Instants de rue", "Studio", "Éditorial"][index % 4]}</span><span className="text-muted-foreground">0{index + 1}</span></div></div>
                 );
               })}
             </div>
@@ -354,11 +310,11 @@ function Index() {
         </section>
 
         {/* Services */}
-        <section id="services" className="scroll-mt-20 px-5 pb-16">
+        <section id="services" className="scroll-mt-20 border-t border-foreground/15 px-5 py-12">
           <div className="mx-auto grid max-w-[92rem] gap-5 md:grid-cols-3">
             {services.map((s) => (
-              <div key={s.title} className={`rounded-3xl p-7 ring-1 ring-black/5 ${s.cardClass}`}>
-                <h3 className="font-display text-2xl uppercase tracking-tight">{s.title}</h3>
+              <div key={s.title} className={`rounded-lg p-7 ${s.cardClass}`}>
+                <h3 className="font-display text-2xl uppercase tracking-normal">{s.title}</h3>
                 <p className={`mt-3 max-w-[34ch] text-pretty text-sm leading-relaxed ${s.bodyClass}`}>
                   {s.body}
                 </p>
@@ -373,7 +329,7 @@ function Index() {
           <div className="mx-auto max-w-[92rem]">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground">
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-normal text-primary-foreground">
                   <Sparkles aria-hidden="true" className="size-4" />
                   Tarifs officiels
                 </p>
@@ -382,7 +338,7 @@ function Index() {
                 </h2>
               </div>
               <p className="max-w-[35ch] text-pretty text-sm font-medium text-cream/75">
-                Choisissez une formule, puis réservez directement dans l'app ou avec le WhatsApp Pro de Mody.
+                Un portrait ou un grand jour ? Trouvez la formule qui vous correspond.
               </p>
             </div>
 
@@ -397,9 +353,9 @@ function Index() {
                       const formule = `${offer.label} — ${section.title} — ${offer.price}`;
                       return (
                         <div key={formule} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
-                          <div className="flex items-center justify-between gap-5">
+                          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                             <p className="text-xl font-bold">{offer.label}</p>
-                            <span className="h-2 min-w-16 flex-1 rounded-full bg-muted" />
+                            <span className="h-px min-w-0 flex-1 bg-foreground/15" />
                             <p className="text-2xl font-bold text-primary">{offer.price}</p>
                           </div>
                           <div className="flex gap-2">
@@ -431,23 +387,23 @@ function Index() {
         <section id="reservation" className="scroll-mt-24 px-5 py-16 sm:py-20">
           <div className="mx-auto grid min-w-0 max-w-[92rem] gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
             <div className="min-w-0">
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cream">
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-normal text-cream">
                 <Send aria-hidden="true" className="size-4" />
                 Réservation
               </p>
               <h2 className="font-display text-5xl uppercase leading-none text-balance sm:text-7xl">
-                Dans l'app ou WhatsApp Pro.
+                Votre prochain<br />shooting commence ici.
               </h2>
               <p className="mt-5 max-w-[42ch] text-pretty text-base leading-relaxed text-muted-foreground">
-                Le formulaire prépare la demande dans l'app. Le bouton WhatsApp ouvre le message prêt à envoyer au numéro professionnel de Mody.
+                Une date, une idée, une envie ? Parlons de votre séance. Mody vous recontactera pour confirmer les détails.
               </p>
-              <div className="mt-6 rounded-3xl bg-foreground p-6 text-cream ring-2 ring-foreground">
-                <img src={modyLogo} alt="Mody Photography" className="h-14 w-auto" />
-                <p className="mt-5 break-words text-xl font-bold sm:text-3xl">{WHATSAPP_DISPLAY}</p>
+              <div className="mt-8 border-t border-foreground/20 py-6">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Vous préférez en parler ?</p>
+                <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-3 text-xl font-bold hover:text-primary sm:text-2xl"><MessageCircle className="size-5 shrink-0" />{WHATSAPP_DISPLAY}</a>
               </div>
             </div>
 
-            <form onSubmit={handleReservationSubmit} className="min-w-0 rounded-3xl border-2 border-foreground bg-card p-4 sm:p-7">
+            <form onSubmit={handleReservationSubmit} className="min-w-0 border-t-2 border-foreground pt-6">
               <div className="grid min-w-0 gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-bold">
                   Nom
@@ -455,6 +411,7 @@ function Index() {
                     value={reservation.nom}
                     onChange={(event) => setReservation((current) => ({ ...current, nom: event.target.value }))}
                     className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    autoComplete="name"
                     placeholder="Votre nom"
                   />
                 </label>
@@ -464,6 +421,8 @@ function Index() {
                     value={reservation.telephone}
                     onChange={(event) => setReservation((current) => ({ ...current, telephone: event.target.value }))}
                     className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                    type="tel"
+                    autoComplete="tel"
                     placeholder="+212 ..."
                   />
                 </label>
@@ -510,20 +469,20 @@ function Index() {
                 </p>
               )}
 
-              <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <Button type="submit" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base">
                   <Send aria-hidden="true" />
-                  Réserver dans l'app
+                  Envoyer ma demande
                 </Button>
-                <Button asChild variant="secondary" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base">
+                <Button asChild variant="secondary" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base sm:col-start-1">
                   <a href={whatsappHref} target="_blank" rel="noreferrer">
                     <MessageCircle aria-hidden="true" />
                     WhatsApp Pro
                   </a>
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-full" onClick={copyReservation} aria-label="Copier la demande">
+                <Button type="button" variant="outline" className="h-12 rounded-full sm:col-start-2 sm:row-start-1" onClick={copyReservation} aria-label="Copier la demande">
                   <Copy aria-hidden="true" />
-                  <span className="md:hidden">Copier la demande</span>
+                  <span className="sm:hidden">Copier la demande</span>
                 </Button>
               </div>
             </form>
@@ -531,16 +490,16 @@ function Index() {
         </section>
 
         {/* Contact CTA */}
-        <section id="contact" className="scroll-mt-20 px-5 pb-20">
-          <div className="mx-auto max-w-[92rem] rounded-[2rem] bg-mint p-8 ring-2 ring-foreground sm:p-12">
+        <section id="contact" className="scroll-mt-20 border-y-2 border-foreground bg-mint px-5 py-12 sm:py-16">
+          <div className="mx-auto max-w-[92rem]">
             <div className="grid items-center gap-8 md:grid-cols-2">
               <div>
-                <h2 className="font-display text-4xl uppercase leading-[0.9] tracking-tight text-balance text-cream sm:text-6xl">
+                <h2 className="font-display text-4xl uppercase leading-[0.9] tracking-normal text-balance text-ink sm:text-6xl">
                   Créons quelque
                   <br />
                   chose de fort.
                 </h2>
-                <p className="mt-4 max-w-[40ch] text-pretty text-base leading-relaxed text-cream/85">
+                <p className="mt-4 max-w-[40ch] text-pretty text-base leading-relaxed text-ink/80">
                   Racontez-moi l'histoire que vous voulez raconter —
                   j'apporterai l'appareil, la lumière et l'audace.
                 </p>
@@ -572,7 +531,7 @@ function Index() {
           <p className="text-sm font-medium text-muted-foreground">
             © 2026 Mody Photographie
           </p>
-          <p className="text-sm font-medium text-muted-foreground">Every shoot is a masterpiece.</p>
+          <div className="flex items-center gap-4"><p className="text-sm font-medium text-muted-foreground">Every shoot is a masterpiece.</p><Button asChild variant="ghost" size="icon" title="Espace Mody"><Link to="/admin" aria-label="Ouvrir l’espace Mody"><LockKeyhole className="size-4" /></Link></Button></div>
         </div>
       </footer>
     </div>
@@ -580,38 +539,31 @@ function Index() {
 }
 
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-foreground bg-background/85 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[92rem] items-center justify-between px-5 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="rounded-full bg-foreground px-3 py-1.5 ring-2 ring-foreground">
-            <img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" />
-          </span>
-        </Link>
-        <nav className="hidden items-center gap-8 text-sm font-medium sm:flex">
-          <Link to="/shootings" className="transition-colors hover:text-primary">Shootings</Link>
-          <a href="#galerie" className="transition-colors hover:text-primary">
-            Galerie
-          </a>
-          <a href="#services" className="transition-colors hover:text-primary">
-            Services
-          </a>
-          <a href="#tarifs" className="transition-colors hover:text-primary">
-            Tarifs
-          </a>
-          <a href="#contact" className="transition-colors hover:text-primary">
-            Contact
-          </a>
+    <header className="sticky top-0 z-40 border-b border-foreground/20 bg-background/95 backdrop-blur-md">
+      <div className="mx-auto grid max-w-[92rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-4 sm:flex sm:justify-between sm:px-10">
+        <Link to="/" className="min-w-0" aria-label="Mody Photography, accueil"><span className="inline-block rounded-full bg-ink px-3 py-1.5"><img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" /></span></Link>
+        <nav aria-label="Navigation principale" className="hidden items-center gap-6 text-sm font-medium lg:flex">
+          <a href="#galerie" className="hover:text-primary">Portfolio</a>
+          <Link to="/shootings" className="hover:text-primary">Shootings</Link>
+          <a href="#services" className="hover:text-primary">Séances</a>
+          <a href="#tarifs" className="hover:text-primary">Tarifs</a>
+          <a href="#contact" className="hover:text-primary">Contact</a>
         </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="icon" className="hidden rounded-full lg:inline-flex" title="Espace Mody">
-            <Link to="/admin" aria-label="Ouvrir l'espace Mody"><LockKeyhole aria-hidden="true" /></Link>
-          </Button>
-          <Button asChild className="rounded-full ring-1 ring-foreground transition-transform hover:-translate-y-0.5">
-            <a href="#reservation"><span>Réserver</span><MessageCircle aria-hidden="true" /></a>
-          </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button asChild className="h-10 rounded-full px-4 font-bold"><a href="#reservation" onClick={closeMenu}>Réserver <ArrowUpRight aria-hidden="true" /></a></Button>
+          <Button variant="ghost" size="icon" className="lg:hidden" aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={menuOpen} aria-controls="home-mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</Button>
         </div>
       </div>
+      {menuOpen && <nav id="home-mobile-nav" aria-label="Navigation mobile" className="grid border-t border-foreground/15 px-5 pb-5 pt-2 text-base font-medium lg:hidden">
+        <a href="#galerie" onClick={closeMenu} className="py-3">Portfolio</a>
+        <Link to="/shootings" onClick={closeMenu} className="py-3">Shootings</Link>
+        <a href="#services" onClick={closeMenu} className="py-3">Séances</a>
+        <a href="#tarifs" onClick={closeMenu} className="py-3">Tarifs</a>
+        <a href="#contact" onClick={closeMenu} className="py-3">Contact</a>
+      </nav>}
     </header>
   );
 }
