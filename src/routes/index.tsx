@@ -361,7 +361,7 @@ function Index() {
                           <div className="flex gap-2">
                             <Button type="button" variant="secondary" size="sm" className="rounded-full" onClick={() => selectOffer(formule)}>
                               <CalendarDays aria-hidden="true" />
-                              App
+                              Choisir
                             </Button>
                             <Button asChild size="sm" className="rounded-full">
                               <a href={createWhatsappHref(formule)} target="_blank" rel="noreferrer">
