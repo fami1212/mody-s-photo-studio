@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep homepage-specific editorial layout and image scrims scoped with `home-` classes in the shared stylesheet so other public and admin pages retain their layout.
