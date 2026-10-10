@@ -18,6 +18,7 @@ import { Route as PartageTokenRouteImport } from './routes/partage.$token'
 import { Route as ShootingsIndexRouteImport } from './routes/shootings.index'
 import { Route as ShootingsSlugRouteImport } from './routes/shootings.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAccueilRouteImport } from './routes/_authenticated/admin.accueil'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminPublicationsRouteImport } from './routes/_authenticated/admin.publications'
 import { Route as AuthenticatedAdminReservationsRouteImport } from './routes/_authenticated/admin.reservations'
@@ -68,6 +69,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAccueilRoute =
+  AuthenticatedAdminAccueilRouteImport.update({
+    id: '/accueil',
+    path: '/accueil',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminDossiersRoute =
   AuthenticatedAdminDossiersRouteImport.update({
     id: '/dossiers',
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/partage/$token': typeof PartageTokenRoute
   '/shootings/$slug': typeof ShootingsSlugRoute
   '/shootings/': typeof ShootingsIndexRoute
+  '/admin/accueil': typeof AuthenticatedAdminAccueilRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin/reservations': typeof AuthenticatedAdminReservationsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesByTo {
   '/partage/$token': typeof PartageTokenRoute
   '/shootings/$slug': typeof ShootingsSlugRoute
   '/shootings': typeof ShootingsIndexRoute
+  '/admin/accueil': typeof AuthenticatedAdminAccueilRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin/reservations': typeof AuthenticatedAdminReservationsRoute
@@ -136,6 +145,7 @@ export interface FileRoutesById {
   '/partage/$token': typeof PartageTokenRoute
   '/shootings/$slug': typeof ShootingsSlugRoute
   '/shootings/': typeof ShootingsIndexRoute
+  '/_authenticated/admin/accueil': typeof AuthenticatedAdminAccueilRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/_authenticated/admin/reservations': typeof AuthenticatedAdminReservationsRoute
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/shootings/$slug'
     | '/shootings/'
+    | '/admin/accueil'
     | '/admin/dossiers'
     | '/admin/publications'
     | '/admin/reservations'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/shootings/$slug'
     | '/shootings'
+    | '/admin/accueil'
     | '/admin/dossiers'
     | '/admin/publications'
     | '/admin/reservations'
@@ -183,6 +195,7 @@ export interface FileRouteTypes {
     | '/partage/$token'
     | '/shootings/$slug'
     | '/shootings/'
+    | '/_authenticated/admin/accueil'
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/publications'
     | '/_authenticated/admin/reservations'
@@ -268,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/accueil': {
+      id: '/_authenticated/admin/accueil'
+      path: '/accueil'
+      fullPath: '/admin/accueil'
+      preLoaderRoute: typeof AuthenticatedAdminAccueilRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/dossiers': {
       id: '/_authenticated/admin/dossiers'
       path: '/dossiers'
@@ -307,6 +327,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAccueilRoute: typeof AuthenticatedAdminAccueilRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminPublicationsRoute: typeof AuthenticatedAdminPublicationsRoute
   AuthenticatedAdminReservationsRoute: typeof AuthenticatedAdminReservationsRoute
@@ -314,6 +335,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAccueilRoute: AuthenticatedAdminAccueilRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminPublicationsRoute: AuthenticatedAdminPublicationsRoute,
   AuthenticatedAdminReservationsRoute: AuthenticatedAdminReservationsRoute,
