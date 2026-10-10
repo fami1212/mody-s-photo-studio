@@ -9,8 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { signPreviewUrls, slugify } from "@/lib/admin-storage";
+import { prepareShootingSeo } from "@/lib/marketing-images";
 
 export const Route = createFileRoute("/_authenticated/admin/publications")({
+  head: () => ({ meta: [
+    { title: "Publications — Admin Mody" },
+    { name: "description", content: "Gestion des shootings et de leurs aperçus par Mody Photography." },
+    { property: "og:title", content: "Publications — Admin Mody" },
+    { property: "og:description", content: "Gestion des shootings et de leurs aperçus par Mody Photography." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
   component: PostsPage,
 });
 
@@ -23,6 +33,8 @@ type Post = {
   category: string | null;
   status: string;
   shot_on: string | null;
+  body: string | null;
+  cover_photo_id: string | null;
 };
 
 const categories = ["Mariage", "Baptême", "Studio", "Extérieur", "Éditorial"];
@@ -43,7 +55,7 @@ function PostsPage() {
   const loadPosts = useCallback(async () => {
     const { data } = await supabase
       .from("posts")
-      .select("id, slug, title, category, status, shot_on")
+      .select("id, slug, title, category, status, shot_on, body, cover_photo_id")
       .order("created_at", { ascending: false });
     setPosts(data ?? []);
   }, []);
@@ -103,7 +115,7 @@ function PostsPage() {
           status,
           published_at: status === "published" ? new Date().toISOString() : null,
         })
-        .select("id, slug, title, category, status, shot_on")
+        .select("id, slug, title, category, status, shot_on, body, cover_photo_id")
         .single();
       if (error) throw error;
 
@@ -111,6 +123,7 @@ function PostsPage() {
         .from("post_photos")
         .insert(selected.map((photoId, index) => ({ post_id: post.id, photo_id: photoId, position: index })));
       if (linkError) throw linkError;
+      await prepareShootingSeo(post);
 
       setPosts((current) => [post, ...current]);
       setTitle("");
@@ -127,6 +140,10 @@ function PostsPage() {
 
   async function toggleStatus(post: Post) {
     const next = post.status === "published" ? "draft" : "published";
+    if (next === "published") {
+      try { await prepareShootingSeo({ ...post, status: next }); }
+      catch { return void toast.error("Préparation de l’aperçu impossible. Réessayez."); }
+    }
     const { error } = await supabase
       .from("posts")
       .update({
@@ -143,6 +160,15 @@ function PostsPage() {
     const { error } = await supabase.from("posts").delete().eq("id", post.id);
     if (error) return void toast.error(error.message);
     setPosts((current) => current.filter((p) => p.id !== post.id));
+  }
+
+  async function refreshPreviews() {
+    setBusy(true);
+    try {
+      for (const post of posts) await prepareShootingSeo(post);
+      toast.success("Aperçus des shootings actualisés.");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Actualisation impossible"); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -236,6 +262,7 @@ function PostsPage() {
 
       <section className="rounded-3xl border-2 border-foreground bg-card p-5">
         <h2 className="font-display text-2xl uppercase tracking-tight">Publications</h2>
+        <Button variant="outline" className="mt-4" disabled={busy} onClick={refreshPreviews}>Actualiser les aperçus</Button>
         {posts.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">Aucune publication.</p>
         ) : (

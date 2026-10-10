@@ -186,7 +186,7 @@ function createWhatsappHref(formule: string, details?: typeof initialReservation
 }
 
 function Index() {
-  const { photos: publishedPhotos } = Route.useLoaderData();
+  const { photos: publishedPhotos, customHero } = Route.useLoaderData();
   const [reservation, setReservation] = useState(initialReservation);
   const [feedback, setFeedback] = useState("");
   const [feedbackType, setFeedbackType] = useState<"success" | "error">("success");
@@ -255,7 +255,7 @@ function Index() {
       <main>
         {/* Hero */}
         <section className="home-hero relative isolate overflow-hidden bg-ink text-cream">
-          <img src={heroMody} alt="Inspiration photographique : portrait avec un appareil argentique" width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
+          <img src={customHero ? "/api/public/media?kind=hero" : heroMody} alt={customHero ? "Photo d’accueil de Mody Photography" : "Inspiration photographique : portrait avec un appareil argentique"} width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
           <div className="home-hero-shade absolute inset-0 -z-10" />
           <div className="home-hero-content mx-auto flex h-full max-w-[92rem] flex-col justify-between px-5 py-8 sm:px-10 sm:py-10">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-xs font-bold uppercase">

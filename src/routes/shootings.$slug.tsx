@@ -4,17 +4,19 @@ import { ArrowLeft, CalendarDays, Camera } from "lucide-react";
 import modyLogo from "@/assets/mody-logo-transparent.png";
 import { Button } from "@/components/ui/button";
 import { getPublishedPost } from "@/lib/gallery.functions";
+import { getRequestOrigin } from "@/lib/origin.functions";
+import { shootingDescription } from "@/lib/marketing-images";
 
 export const Route = createFileRoute("/shootings/$slug")({
   loader: async ({ params }) => {
-    const result = await getPublishedPost({ data: { slug: params.slug } });
+    const [result, origin] = await Promise.all([getPublishedPost({ data: { slug: params.slug } }), getRequestOrigin()]);
     if (!result.post) throw notFound();
-    return result.post;
+    return { ...result.post, origin };
   },
   head: ({ loaderData }) => {
-    const title = loaderData ? `${loaderData.title} — Mody Photography` : "Shooting indisponible — Mody Photography";
-    const description = loaderData?.body?.slice(0, 160) || "Découvrez ce shooting photographié par Mody.";
-    const image = loaderData?.photos[0]?.url;
+    const title = loaderData ? `${loaderData.title}${loaderData.category ? ` · ${loaderData.category}` : ""} — Mody Photography` : "Shooting indisponible — Mody Photography";
+    const description = loaderData?.seoDescription || shootingDescription(loaderData?.title ?? "Shooting", loaderData?.category, loaderData?.body);
+    const image = loaderData?.hasShareImage ? new URL(`/api/public/media?kind=shooting&slug=${encodeURIComponent(loaderData.slug)}`, loaderData.origin).href : undefined;
     return {
       meta: [
         { title },
@@ -23,13 +25,22 @@ export const Route = createFileRoute("/shootings/$slug")({
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { property: "og:url", content: `/shootings/${loaderData?.slug ?? ""}` },
+        { property: "og:locale", content: "fr_MA" },
         ...(image?.startsWith("https://")
           ? [
               { property: "og:image", content: image },
               { name: "twitter:image", content: image },
+              { property: "og:image:width", content: "1200" },
+              { property: "og:image:height", content: "630" },
+              { property: "og:image:alt", content: loaderData?.title ?? "Shooting Mody Photography" },
+              { name: "twitter:image:alt", content: loaderData?.title ?? "Shooting Mody Photography" },
             ]
           : []),
       ],
+      links: [{ rel: "canonical", href: `/shootings/${loaderData?.slug ?? ""}` }],
     };
   },
   notFoundComponent: ShootingNotFound,
