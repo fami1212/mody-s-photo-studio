@@ -290,6 +290,59 @@ export type Database = {
           },
         ]
       }
+      shooting_seo: {
+        Row: {
+          active: boolean
+          description: string
+          image_path: string | null
+          post_id: string
+          slug: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          description: string
+          image_path?: string | null
+          post_id: string
+          slug: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          description?: string
+          image_path?: string | null
+          post_id?: string
+          slug?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shooting_seo_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: true
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_appearance: {
+        Row: {
+          hero_path: string | null
+          id: string
+          share_path: string | null
+        }
+        Insert: {
+          hero_path?: string | null
+          id?: string
+          share_path?: string | null
+        }
+        Update: {
+          hero_path?: string | null
+          id?: string
+          share_path?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
