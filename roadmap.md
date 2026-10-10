@@ -1,0 +1,5 @@
+- [ ] Allow the admin to upload or select a homepage hero photo.
+- [ ] Give published shootings individual titles, descriptions and stable share images.
+- [ ] Maintain robots.txt for public discovery.
+- [ ] Generate sitemap XML after a public site URL exists (blocked: site not published).
+- [ ] Verify hero changes and shooting metadata end to end.

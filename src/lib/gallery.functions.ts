@@ -126,6 +126,8 @@ export const getPublishedPost = createServerFn({ method: "GET" })
 
     const rows = (links ?? []).filter((l) => l.photos);
     const signed = await signPaths(rows.map((l) => pick(l.photos as any, "display")));
+    const { data: seo } = await admin.from("shooting_seo").select("description, image_path").eq("post_id", post.id).eq("active", true).maybeSingle();
+    const orderedRows = [...rows].sort((a, b) => Number(b.photo_id === post.cover_photo_id) - Number(a.photo_id === post.cover_photo_id));
 
     return {
       post: {
@@ -135,7 +137,9 @@ export const getPublishedPost = createServerFn({ method: "GET" })
         body: post.body,
         shotOn: post.shot_on,
         publishedAt: post.published_at,
-        photos: rows
+        seoDescription: seo?.description ?? null,
+        hasShareImage: Boolean(seo?.image_path),
+        photos: orderedRows
           .map((l) => {
             const photo = l.photos as any;
             const url = signed[pick(photo, "display")];

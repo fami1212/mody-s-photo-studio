@@ -39,6 +39,7 @@ function AdminLayout() {
             <img src={modyLogo} alt="Mody Photography" className="h-6 w-auto" />
           </Link>
           <nav className="order-3 flex w-full gap-2 overflow-x-auto text-sm font-bold sm:order-none sm:w-auto">
+            <Link to="/admin/accueil" className="whitespace-nowrap rounded-full border-2 border-foreground px-4 py-2" activeProps={{ className: "bg-foreground text-cream" }}>Accueil</Link>
             <Link
               to="/admin/dossiers"
               className="whitespace-nowrap rounded-full border-2 border-foreground px-4 py-2"

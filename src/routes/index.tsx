@@ -15,14 +15,16 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { submitBooking } from "@/lib/bookings.functions";
 import { listRecentPublishedPhotos } from "@/lib/gallery.functions";
 import { getRequestOrigin } from "@/lib/origin.functions";
+import { getAppearance } from "@/lib/appearance.functions";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [gallery, origin] = await Promise.all([
+    const [gallery, origin, appearance] = await Promise.all([
       listRecentPublishedPhotos(),
       getRequestOrigin(),
+      getAppearance(),
     ]);
-    return { ...gallery, origin };
+    return { ...gallery, origin, ...appearance };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -48,13 +50,13 @@ export const Route = createFileRoute("/")({
         content: "Portraits, studio, extérieurs, mariages et baptêmes à Casablanca. Découvrez l’univers de Mody. Every shoot is a masterpiece.",
       },
       ...(loaderData?.origin ? [
-        { property: "og:image", content: new URL(homeSocialImage.url, loaderData.origin).href },
-        { name: "twitter:image", content: new URL(homeSocialImage.url, loaderData.origin).href },
+        { property: "og:image", content: new URL(loaderData.customShare ? "/api/public/media?kind=home-share" : homeSocialImage.url, loaderData.origin).href },
+        { name: "twitter:image", content: new URL(loaderData.customShare ? "/api/public/media?kind=home-share" : homeSocialImage.url, loaderData.origin).href },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
         { property: "og:image:type", content: "image/jpeg" },
-        { property: "og:image:alt", content: "Portrait avec un appareil argentique, image d’accueil de Mody Photography" },
-        { name: "twitter:image:alt", content: "Portrait avec un appareil argentique, image d’accueil de Mody Photography" },
+        { property: "og:image:alt", content: "Photo d’accueil de Mody Photography" },
+        { name: "twitter:image:alt", content: "Photo d’accueil de Mody Photography" },
       ] : []),
     ],
   }),
@@ -184,7 +186,7 @@ function createWhatsappHref(formule: string, details?: typeof initialReservation
 }
 
 function Index() {
-  const { photos: publishedPhotos } = Route.useLoaderData();
+  const { photos: publishedPhotos, customHero } = Route.useLoaderData();
   const [reservation, setReservation] = useState(initialReservation);
   const [feedback, setFeedback] = useState("");
   const [feedbackType, setFeedbackType] = useState<"success" | "error">("success");
@@ -253,7 +255,7 @@ function Index() {
       <main>
         {/* Hero */}
         <section className="home-hero relative isolate overflow-hidden bg-ink text-cream">
-          <img src={heroMody} alt="Inspiration photographique : portrait avec un appareil argentique" width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
+          <img src={customHero ? "/api/public/media?kind=hero" : heroMody} alt={customHero ? "Photo d’accueil de Mody Photography" : "Inspiration photographique : portrait avec un appareil argentique"} width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
           <div className="home-hero-shade absolute inset-0 -z-10" />
           <div className="home-hero-content mx-auto flex h-full max-w-[92rem] flex-col justify-between px-5 py-8 sm:px-10 sm:py-10">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-xs font-bold uppercase">
