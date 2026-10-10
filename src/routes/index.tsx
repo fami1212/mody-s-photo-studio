@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import heroMody from "@/assets/hero-mody.jpg";
+import homeSocialImage from "@/assets/mody-home-social.jpg.asset.json";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
@@ -13,26 +14,49 @@ import { Button } from "@/components/ui/button";
 import { ChatPanel } from "@/components/ChatPanel";
 import { submitBooking } from "@/lib/bookings.functions";
 import { listRecentPublishedPhotos } from "@/lib/gallery.functions";
+import { getRequestOrigin } from "@/lib/origin.functions";
 
 export const Route = createFileRoute("/")({
-  loader: () => listRecentPublishedPhotos(),
-  head: () => ({
+  loader: async () => {
+    const [gallery, origin] = await Promise.all([
+      listRecentPublishedPhotos(),
+      getRequestOrigin(),
+    ]);
+    return { ...gallery, origin };
+  },
+  head: ({ loaderData }) => ({
     meta: [
-      { title: "Mody Photography — Photographe à Casablanca" },
+      { title: "Mody Photography | Shootings & mariages à Casablanca" },
       {
         name: "description",
         content:
-          "Mody Photography à Casablanca. Découvrez les shootings, les tarifs studio, extérieurs et événements, et réservez votre séance.",
+          "Découvrez les shootings de Mody à Casablanca : portraits en studio et en extérieur, mariages et baptêmes. Consultez les tarifs et réservez votre séance.",
       },
-      { property: "og:title", content: "Mody Photography — Tarifs & réservation" },
+      { property: "og:title", content: "Mody Photography — Shootings à Casablanca" },
       {
         property: "og:description",
         content:
-          "Tarifs photo et vidéo de Mody à Casablanca, avec réservation dans l'app ou sur WhatsApp Pro.",
+          "Portraits, studio, extérieurs, mariages et baptêmes à Casablanca. Découvrez l’univers de Mody. Every shoot is a masterpiece.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "fr_MA" },
+      { property: "og:site_name", content: "Mody Photography" },
       { name: "twitter:card", content: "summary_large_image" },
-],
+      { name: "twitter:title", content: "Mody Photography — Shootings à Casablanca" },
+      {
+        name: "twitter:description",
+        content: "Portraits, studio, extérieurs, mariages et baptêmes à Casablanca. Découvrez l’univers de Mody. Every shoot is a masterpiece.",
+      },
+      ...(loaderData?.origin ? [
+        { property: "og:image", content: new URL(homeSocialImage.url, loaderData.origin).href },
+        { name: "twitter:image", content: new URL(homeSocialImage.url, loaderData.origin).href },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
+        { property: "og:image:alt", content: "Portrait avec un appareil argentique, image d’accueil de Mody Photography" },
+        { name: "twitter:image:alt", content: "Portrait avec un appareil argentique, image d’accueil de Mody Photography" },
+      ] : []),
+    ],
   }),
   component: Index,
 });

@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep homepage-specific editorial layout and image scrims scoped with `home-` classes in the shared stylesheet so other public and admin pages retain their layout.
+- Resolve homepage social-image URLs from the server request origin and a CDN asset pointer; this keeps previews absolute without hardcoding a deployment domain.
