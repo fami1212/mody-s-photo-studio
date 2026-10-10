@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminPublicationsRouteImport } from './routes/_authenticated/admin.publications'
 import { Route as AuthenticatedAdminReservationsRouteImport } from './routes/_authenticated/admin.reservations'
+import { Route as ApiPublicMediaRouteImport } from './routes/api/public/media'
 import { Route as ApiPublicChatBookingRouteImport } from './routes/api/public/chat.booking'
 
 const IndexRoute = IndexRouteImport.update({
@@ -85,6 +86,11 @@ const AuthenticatedAdminReservationsRoute =
     path: '/reservations',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicMediaRoute = ApiPublicMediaRouteImport.update({
+  id: '/api/public/media',
+  path: '/api/public/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicChatBookingRoute = ApiPublicChatBookingRouteImport.update({
   id: '/api/public/chat/booking',
   path: '/api/public/chat/booking',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin/reservations': typeof AuthenticatedAdminReservationsRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/chat/booking': typeof ApiPublicChatBookingRoute
 }
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/admin/reservations': typeof AuthenticatedAdminReservationsRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/chat/booking': typeof ApiPublicChatBookingRoute
 }
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/publications': typeof AuthenticatedAdminPublicationsRoute
   '/_authenticated/admin/reservations': typeof AuthenticatedAdminReservationsRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/chat/booking': typeof ApiPublicChatBookingRoute
 }
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/publications'
     | '/admin/reservations'
+    | '/api/public/media'
     | '/admin/'
     | '/api/public/chat/booking'
   fileRoutesByTo: FileRoutesByTo
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/publications'
     | '/admin/reservations'
+    | '/api/public/media'
     | '/admin'
     | '/api/public/chat/booking'
   id:
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/publications'
     | '/_authenticated/admin/reservations'
+    | '/api/public/media'
     | '/_authenticated/admin/'
     | '/api/public/chat/booking'
   fileRoutesById: FileRoutesById
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   PartageTokenRoute: typeof PartageTokenRoute
   ShootingsSlugRoute: typeof ShootingsSlugRoute
   ShootingsIndexRoute: typeof ShootingsIndexRoute
+  ApiPublicMediaRoute: typeof ApiPublicMediaRoute
   ApiPublicChatBookingRoute: typeof ApiPublicChatBookingRoute
 }
 
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminReservationsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/media': {
+      id: '/api/public/media'
+      path: '/api/public/media'
+      fullPath: '/api/public/media'
+      preLoaderRoute: typeof ApiPublicMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/chat/booking': {
       id: '/api/public/chat/booking'
       path: '/api/public/chat/booking'
@@ -322,6 +342,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartageTokenRoute: PartageTokenRoute,
   ShootingsSlugRoute: ShootingsSlugRoute,
   ShootingsIndexRoute: ShootingsIndexRoute,
+  ApiPublicMediaRoute: ApiPublicMediaRoute,
   ApiPublicChatBookingRoute: ApiPublicChatBookingRoute,
 }
 export const routeTree = rootRouteImport
