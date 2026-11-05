@@ -19,12 +19,28 @@ import { getAppearance } from "@/lib/appearance.functions";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [gallery, origin, appearance] = await Promise.all([
+    const [galleryResult, originResult, appearanceResult] = await Promise.allSettled([
       listRecentPublishedPhotos(),
       getRequestOrigin(),
       getAppearance(),
     ]);
-    return { ...gallery, origin, ...appearance };
+
+    if (galleryResult.status === "rejected") {
+      console.error("Homepage gallery could not be loaded", galleryResult.reason);
+    }
+    if (originResult.status === "rejected") {
+      console.error("Homepage request origin could not be resolved", originResult.reason);
+    }
+    if (appearanceResult.status === "rejected") {
+      console.error("Homepage appearance could not be loaded", appearanceResult.reason);
+    }
+
+    return {
+      photos: galleryResult.status === "fulfilled" ? galleryResult.value.photos : [],
+      origin: originResult.status === "fulfilled" ? originResult.value : "",
+      customHero: appearanceResult.status === "fulfilled" ? appearanceResult.value.customHero : false,
+      customShare: appearanceResult.status === "fulfilled" ? appearanceResult.value.customShare : false,
+    };
   },
   head: ({ loaderData }) => ({
     meta: [
