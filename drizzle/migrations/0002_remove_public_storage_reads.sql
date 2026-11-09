@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "public reads selected marketing copies" ON storage.objects;
