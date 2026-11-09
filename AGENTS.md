@@ -11,5 +11,5 @@
 
 - Keep homepage-specific editorial layout and image scrims scoped with `home-` classes in the shared stylesheet so other public and admin pages retain their layout.
 - Resolve social-image URLs from the server request origin; use a CDN pointer for the default homepage image and stable public-media endpoints for admin-selected images, avoiding hardcoded deployment domains.
-- Store only resized marketing copies in site_appearance and shooting_seo; anonymous media reads are limited by RLS to selected homepage images and active shooting previews, keeping client originals private.
+- Store only resized marketing copies in site_appearance and shooting_seo; serve selected images through a public endpoint that allow-lists marketing paths while keeping the storage bucket private.
 - Generate share-sized images in the browser during admin photo selection or publication, because the server runtime cannot use native image processors.

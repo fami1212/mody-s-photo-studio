@@ -23,8 +23,10 @@ export const Route = createFileRoute("/api/public/media")({
       path = parsed.data.kind === "hero" ? data?.hero_path ?? null : data?.share_path ?? null;
     }
     if (!path) return new Response("Not found", { status: 404 });
-    const { data, error } = await client.storage.from("photos").download(path);
+    if (!/^marketing\/[0-9a-f-]{36}-(hero|share)\.jpg$/.test(path)) return new Response("Not found", { status: 404 });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.storage.from("photos").download(path);
     if (error || !data) return new Response("Not found", { status: 404 });
-    return new Response(data, { headers: { "Content-Type": data.type || "image/jpeg", "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff" } });
+    return new Response(data, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400, immutable", "X-Content-Type-Options": "nosniff" } });
   } } },
 });
