@@ -8,6 +8,13 @@
       "when": 1791640774535,
       "tag": "0000_site_appearance_and_shooting_seo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794227078906,
+      "tag": "0001_restrict_public_marketing_media",
+      "breakpoints": true
     }
   ]
 }
