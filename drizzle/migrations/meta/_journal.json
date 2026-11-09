@@ -15,6 +15,13 @@
       "when": 1794227078906,
       "tag": "0001_restrict_public_marketing_media",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794227165753,
+      "tag": "0002_remove_public_storage_reads",
+      "breakpoints": true
     }
   ]
 }
