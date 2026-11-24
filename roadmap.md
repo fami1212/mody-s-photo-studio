@@ -1,5 +1,8 @@
-- [ ] Allow the admin to upload or select a homepage hero photo.
+- [ ] Fix the production failure on the public shootings page and show a usable fallback if data cannot load.
+- [ ] Improve photo browsing and uploads in the admin area.
+- [ ] Fix homepage hero-photo updates so a saved image appears on the homepage.
+- [ ] Fix the reservation form and verify a booking reaches the admin list.
+- [ ] Verify shootings, hero updates, and reservations in the available preview; production verification waits for publication.
 - [ ] Give published shootings individual titles, descriptions and stable share images.
 - [ ] Maintain robots.txt for public discovery.
 - [ ] Generate sitemap XML after a public site URL exists (blocked: site not published).
-- [ ] Verify hero changes and shooting metadata end to end.
