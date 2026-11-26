@@ -98,39 +98,55 @@ function HomepageSettings() {
     finally { setBusy(false); }
   }
 
-  return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-5">
-    <h1 className="font-display text-4xl uppercase">Photo d’accueil</h1>
-    <div className="mt-6 grid gap-8 md:grid-cols-2">
-      <figure className="overflow-hidden rounded-lg border-2 border-foreground">
-        <img src={preview} alt="Aperçu de la photo d’accueil" className="aspect-[16/10] w-full object-cover" />
-      </figure>
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="hero-upload">Importer une photo</Label>
-          <input id="hero-upload" type="file" accept="image/jpeg,image/png,image/webp" className="block w-full text-sm" disabled={busy} onChange={e => {
-            const next = e.target.files?.[0];
-            if (!next) return;
-            if (!["image/jpeg", "image/png", "image/webp"].includes(next.type) || next.size > 20 * 1024 * 1024) return void toast.error("Choisissez une photo JPG, PNG ou WebP de moins de 20 Mo.");
-            setFile(next); setPhotoId("");
-          }} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="hero-folder">Ou choisir dans un dossier</Label>
-          <select id="hero-folder" value={folderId} onChange={e => setFolderId(e.target.value)} className="h-10 w-full rounded-md border-2 border-foreground bg-background px-3">
-            <option value="">Choisir un dossier</option>
-            {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-          </select>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {photos.map(photo => <Button key={photo.id} variant="outline" aria-label={`Choisir ${photo.file_name ?? "la photo"}`} aria-pressed={photoId === photo.id} className={`h-auto overflow-hidden rounded-lg p-0 ${photoId === photo.id ? "ring-2 ring-primary" : ""}`} onClick={() => { setFile(null); setPhotoId(photo.id); setPreview(urls[photo.thumb_path ?? photo.display_path ?? photo.storage_path] ?? heroMody); }}>
-            <img src={urls[photo.thumb_path ?? photo.display_path ?? photo.storage_path]} alt={photo.file_name ?? "Photo du dossier"} className="aspect-square w-full object-cover" />
-          </Button>)}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button disabled={busy || (!file && !photoId)} onClick={() => save()}><Save /> {busy ? "Enregistrement…" : "Enregistrer la photo"}</Button>
-          <Button variant="outline" disabled={busy} onClick={() => save(true)}><RotateCcw /> Photo d’origine</Button>
-        </div>
+  return (
+    <main className="admin-page space-y-6">
+      <header>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Personnalisation du site</p>
+        <h1 className="admin-page-title mt-2 font-display uppercase">Photo d’accueil</h1>
+        <p className="mt-3 max-w-[60ch] text-sm text-muted-foreground sm:text-base">
+          Choisissez l’image qui mettra votre studio en avant sur la page d’accueil.
+        </p>
+      </header>
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+        <figure className="admin-card h-fit overflow-hidden p-2">
+          <img src={preview} alt="Aperçu de la photo d’accueil" className="aspect-[16/10] w-full rounded-2xl bg-muted object-cover" />
+          <figcaption className="px-3 py-3 text-xs font-medium text-muted-foreground">Aperçu de la couverture actuelle</figcaption>
+        </figure>
+        <section className="admin-card space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="hero-upload">Importer une photo</Label>
+            <label htmlFor="hero-upload" className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-foreground/30 bg-muted/50 px-4 py-3 text-sm font-semibold transition hover:bg-muted">
+              <Upload aria-hidden="true" className="size-4" />
+              {file ? file.name : "Choisir une image JPG, PNG ou WebP"}
+            </label>
+            <input id="hero-upload" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={busy} onChange={e => {
+              const next = e.target.files?.[0];
+              if (!next) return;
+              if (!["image/jpeg", "image/png", "image/webp"].includes(next.type) || next.size > 20 * 1024 * 1024) return void toast.error("Choisissez une photo JPG, PNG ou WebP de moins de 20 Mo.");
+              setFile(next); setPhotoId("");
+            }} />
+            <p className="text-xs text-muted-foreground">Taille maximale : 20 Mo.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hero-folder">Ou choisir dans un dossier</Label>
+            <select id="hero-folder" value={folderId} onChange={e => setFolderId(e.target.value)} className="admin-touch-target w-full rounded-xl border border-input bg-background px-3 text-sm">
+              <option value="">Choisir un dossier</option>
+              {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </select>
+          </div>
+          {photos.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {photos.map(photo => <Button key={photo.id} variant="outline" aria-label={`Choisir ${photo.file_name ?? "la photo"}`} aria-pressed={photoId === photo.id} className={`h-auto min-w-0 overflow-hidden rounded-xl p-0 ${photoId === photo.id ? "ring-2 ring-primary" : ""}`} onClick={() => { setFile(null); setPhotoId(photo.id); setPreview(urls[photo.thumb_path ?? photo.display_path ?? photo.storage_path] ?? heroMody); }}>
+                <img src={urls[photo.thumb_path ?? photo.display_path ?? photo.storage_path]} alt={photo.file_name ?? "Photo du dossier"} loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
+              </Button>)}
+            </div>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button className="admin-touch-target w-full" disabled={busy || (!file && !photoId)} onClick={() => save()}><Save /> {busy ? "Enregistrement…" : "Enregistrer la photo"}</Button>
+            <Button variant="outline" className="admin-touch-target w-full" disabled={busy} onClick={() => save(true)}><RotateCcw /> Photo d’origine</Button>
+          </div>
+        </section>
       </div>
-    </div>
-  </main>;
+    </main>
+  );
 }

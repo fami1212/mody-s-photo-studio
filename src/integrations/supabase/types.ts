@@ -19,6 +19,7 @@ export type Database = {
           admin_notes: string | null
           created_at: string
           event_date: string | null
+          event_time: string | null
           id: string
           location: string | null
           message: string | null
@@ -33,6 +34,7 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           event_date?: string | null
+          event_time?: string | null
           id?: string
           location?: string | null
           message?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           event_date?: string | null
+          event_time?: string | null
           id?: string
           location?: string | null
           message?: string | null
@@ -369,7 +372,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_booking_slot_available: {
+        Args: {
+          p_event_date: string
+          p_event_time: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin"

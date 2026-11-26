@@ -1,5 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CalendarDays, Camera, Copy, LockKeyhole, MessageCircle, Send, Sparkles, ArrowUpRight, Menu, X, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Camera,
+  Copy,
+  LockKeyhole,
+  MessageCircle,
+  Send,
+  Sparkles,
+  ArrowUpRight,
+  Menu,
+  X,
+  MapPin,
+} from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { z } from "zod";
 
@@ -38,8 +51,14 @@ export const Route = createFileRoute("/")({
     return {
       photos: galleryResult.status === "fulfilled" ? galleryResult.value.photos : [],
       origin: originResult.status === "fulfilled" ? originResult.value : "",
-      customHero: appearanceResult.status === "fulfilled" ? appearanceResult.value.customHero : false,
-      customShare: appearanceResult.status === "fulfilled" ? appearanceResult.value.customShare : false,
+      customHero:
+        appearanceResult.status === "fulfilled" ? appearanceResult.value.customHero : false,
+      heroVersion:
+        appearanceResult.status === "fulfilled" ? appearanceResult.value.heroVersion : null,
+      customShare:
+        appearanceResult.status === "fulfilled" ? appearanceResult.value.customShare : false,
+      shareVersion:
+        appearanceResult.status === "fulfilled" ? appearanceResult.value.shareVersion : null,
     };
   },
   head: ({ loaderData }) => ({
@@ -63,17 +82,36 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "Mody Photography — Shootings à Casablanca" },
       {
         name: "twitter:description",
-        content: "Portraits, studio, extérieurs, mariages et baptêmes à Casablanca. Découvrez l’univers de Mody. Every shoot is a masterpiece.",
+        content:
+          "Portraits, studio, extérieurs, mariages et baptêmes à Casablanca. Découvrez l’univers de Mody. Every shoot is a masterpiece.",
       },
-      ...(loaderData?.origin ? [
-        { property: "og:image", content: new URL(loaderData.customShare ? "/api/public/media?kind=home-share" : homeSocialImage.url, loaderData.origin).href },
-        { name: "twitter:image", content: new URL(loaderData.customShare ? "/api/public/media?kind=home-share" : homeSocialImage.url, loaderData.origin).href },
-        { property: "og:image:width", content: "1200" },
-        { property: "og:image:height", content: "630" },
-        { property: "og:image:type", content: "image/jpeg" },
-        { property: "og:image:alt", content: "Photo d’accueil de Mody Photography" },
-        { name: "twitter:image:alt", content: "Photo d’accueil de Mody Photography" },
-      ] : []),
+      ...(loaderData?.origin
+        ? [
+            {
+              property: "og:image",
+              content: new URL(
+                loaderData.customShare
+                  ? `/api/public/media?kind=home-share${loaderData.shareVersion ? `&v=${loaderData.shareVersion}` : ""}`
+                  : homeSocialImage.url,
+                loaderData.origin,
+              ).href,
+            },
+            {
+              name: "twitter:image",
+              content: new URL(
+                loaderData.customShare
+                  ? `/api/public/media?kind=home-share${loaderData.shareVersion ? `&v=${loaderData.shareVersion}` : ""}`
+                  : homeSocialImage.url,
+                loaderData.origin,
+              ).href,
+            },
+            { property: "og:image:width", content: "1200" },
+            { property: "og:image:height", content: "630" },
+            { property: "og:image:type", content: "image/jpeg" },
+            { property: "og:image:alt", content: "Photo d’accueil de Mody Photography" },
+            { name: "twitter:image:alt", content: "Photo d’accueil de Mody Photography" },
+          ]
+        : []),
     ],
   }),
   component: Index,
@@ -108,8 +146,16 @@ const socialLinks = [
 
 const frames = [
   { src: gallery1, alt: "Portrait mode sous néons, contre un mur de briques", bg: "bg-pink/50" },
-  { src: gallery2, alt: "Scène de rue au soleil couchant, cycliste et ombres longues", bg: "bg-butter/60" },
-  { src: gallery3, alt: "Nature morte en studio, bol en céramique sur chêne ancien", bg: "bg-mint/50" },
+  {
+    src: gallery2,
+    alt: "Scène de rue au soleil couchant, cycliste et ombres longues",
+    bg: "bg-butter/60",
+  },
+  {
+    src: gallery3,
+    alt: "Nature morte en studio, bol en céramique sur chêne ancien",
+    bg: "bg-mint/50",
+  },
   { src: gallery4, alt: "Portrait éditorial sur un rooftop, rire spontané", bg: "bg-lilac/50" },
 ];
 
@@ -173,6 +219,7 @@ const initialReservation = {
   nom: "",
   telephone: "",
   date: "",
+  heure: "",
   formule: allOffers[0] ?? "",
   message: "",
 };
@@ -183,8 +230,19 @@ const reservationSchema = z.object({
     .string()
     .trim()
     .regex(/^[+0-9 ().-]{8,24}$/, "Ajoutez un numéro de téléphone valide."),
-  date: z.string().trim().min(1, "Ajoutez une date ou une période.").max(40, "La date est trop longue."),
-  formule: z.string().trim().min(1, "Choisissez une formule.").max(140, "La formule est trop longue."),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Choisissez une date valide.")
+    .refine((value) => {
+      const parsed = new Date(`${value}T00:00:00.000Z`);
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+    }, "Choisissez une date valide."),
+  heure: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Choisissez une heure valide."),
+  formule: z
+    .string()
+    .trim()
+    .min(1, "Choisissez une formule.")
+    .max(120, "La formule est trop longue."),
   message: z.string().trim().max(500, "Le message est trop long."),
 });
 
@@ -194,7 +252,9 @@ function createWhatsappHref(formule: string, details?: typeof initialReservation
     `Formule : ${formule || "à choisir"}`,
     details?.nom.trim() ? `Nom : ${details.nom.trim()}` : "",
     details?.telephone.trim() ? `Téléphone : ${details.telephone.trim()}` : "",
-    details?.date.trim() ? `Date souhaitée : ${details.date.trim()}` : "",
+    details?.date.trim()
+      ? `Date et heure souhaitées : ${details.date.trim()}${details.heure.trim() ? ` à ${details.heure.trim()}` : ""}`
+      : "",
     details?.message.trim() ? `Message : ${details.message.trim()}` : "",
   ].filter(Boolean);
 
@@ -202,7 +262,10 @@ function createWhatsappHref(formule: string, details?: typeof initialReservation
 }
 
 function Index() {
-  const { photos: publishedPhotos, customHero } = Route.useLoaderData();
+  const { photos: publishedPhotos, customHero, heroVersion } = Route.useLoaderData();
+  const heroUrl = customHero
+    ? `/api/public/media?kind=hero${heroVersion ? `&v=${heroVersion}` : ""}`
+    : heroMody;
   const [reservation, setReservation] = useState(initialReservation);
   const [feedback, setFeedback] = useState("");
   const [feedbackType, setFeedbackType] = useState<"success" | "error">("success");
@@ -236,6 +299,7 @@ function Index() {
           phone: result.data.telephone,
           offer: result.data.formule,
           event_date: result.data.date,
+          event_time: result.data.heure,
           message: result.data.message,
         },
       });
@@ -245,10 +309,14 @@ function Index() {
         return;
       }
       setFeedbackType("success");
-      setFeedback("Demande envoyée à Mody ! Il vous recontacte vite. Vous pouvez aussi l'envoyer sur WhatsApp Pro.");
+      setFeedback(
+        "Demande envoyée à Mody ! Il vous recontacte vite. Vous pouvez aussi l'envoyer sur WhatsApp Pro.",
+      );
     } catch {
       setFeedbackType("error");
-      setFeedback("Envoi impossible pour le moment. Utilisez le bouton WhatsApp.");
+      setFeedback(
+        "Impossible de vérifier la disponibilité ou d'envoyer la demande. Réessayez ou utilisez WhatsApp.",
+      );
     }
   }
 
@@ -264,16 +332,20 @@ function Index() {
       <Header />
       <ChatPanel
         mode="booking"
-        title="Réserver avec l'assistant"
-        greeting="Salut ! Je suis l'assistant de Mody. Je peux vous renseigner sur les tarifs et enregistrer votre réservation. Que souhaitez-vous shooter ?"
+        title="Guide tarifaire"
+        greeting="Salut ! Je peux répondre à une première question sur les tarifs. Pour une réservation ou pour continuer, je vous mets en relation avec Mody sur WhatsApp. Que souhaitez-vous savoir ?"
       />
 
       <main>
         {/* Hero */}
         <section className="home-hero relative isolate overflow-hidden bg-ink text-cream">
           <img
-            src={customHero ? "/api/public/media?kind=hero" : heroMody}
-            alt={customHero ? "Photo d’accueil de Mody Photography" : "Inspiration photographique : portrait avec un appareil argentique"}
+            src={heroUrl}
+            alt={
+              customHero
+                ? "Photo d’accueil de Mody Photography"
+                : "Inspiration photographique : portrait avec un appareil argentique"
+            }
             width={1200}
             height={768}
             fetchPriority="high"
@@ -283,22 +355,51 @@ function Index() {
           <div className="home-hero-shade absolute inset-0 -z-10" />
           <div className="home-hero-content mx-auto flex h-full max-w-[92rem] flex-col justify-between px-5 py-8 sm:px-10 sm:py-10">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-xs font-bold uppercase">
-              <span className="flex min-w-0 items-center gap-2"><MapPin className="size-4 shrink-0" /> Casablanca, Maroc</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <MapPin className="size-4 shrink-0" /> Casablanca, Maroc
+              </span>
               <span className="border-b border-cream/50 pb-1">Photo & vidéo</span>
             </div>
             <div className="max-w-2xl py-10">
-              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-butter"><span className="h-px w-8 bg-butter" /> Un regard. Votre histoire.</p>
-              <h1 className="home-hero-title rise font-display uppercase">Mody<br /><span className="text-butter">Photography.</span></h1>
+              <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase text-butter">
+                <span className="h-px w-8 bg-butter" /> Un regard. Votre histoire.
+              </p>
+              <h1 className="home-hero-title rise font-display uppercase">
+                Mody
+                <br />
+                <span className="text-butter">Photography.</span>
+              </h1>
               <p className="mt-6 text-lg font-medium sm:text-2xl">Every shoot is a masterpiece</p>
-              <p className="mt-3 max-w-[35ch] text-sm leading-relaxed text-cream/80 sm:text-base">Du studio aux grands jours. Des images qui vous ressemblent, des moments qui restent.</p>
+              <p className="mt-3 max-w-[35ch] text-sm leading-relaxed text-cream/80 sm:text-base">
+                Du studio aux grands jours. Des images qui vous ressemblent, des moments qui
+                restent.
+              </p>
               <div className="mt-8 grid max-w-sm gap-3 sm:flex sm:max-w-none">
-                <Button asChild className="h-12 rounded-full px-6 font-bold"><a href="#reservation">Réserver une séance <ArrowUpRight aria-hidden="true" /></a></Button>
-                <Button asChild variant="outline" className="h-12 rounded-full border-cream/60 bg-transparent px-6 text-cream hover:bg-cream hover:text-ink"><a href="#galerie">Explorer les images <ArrowRight aria-hidden="true" /></a></Button>
+                <Button asChild className="h-12 rounded-full px-6 font-bold">
+                  <a href="#reservation">
+                    Réserver une séance <ArrowUpRight aria-hidden="true" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 rounded-full border-cream/60 bg-transparent px-6 text-cream hover:bg-cream hover:text-ink"
+                >
+                  <a href="#galerie">
+                    Explorer les images <ArrowRight aria-hidden="true" />
+                  </a>
+                </Button>
               </div>
             </div>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 border-t border-cream/30 pt-4 text-xs text-cream/80">
               <span>Studio · Extérieurs · Mariages & baptêmes</span>
-              <a href="#galerie" aria-label="Découvrir la galerie" className="grid size-9 shrink-0 place-items-center rounded-full border border-cream/50"><ArrowRight className="size-4 rotate-90" /></a>
+              <a
+                href="#galerie"
+                aria-label="Découvrir la galerie"
+                className="grid size-9 shrink-0 place-items-center rounded-full border border-cream/50"
+              >
+                <ArrowRight className="size-4 rotate-90" />
+              </a>
             </div>
           </div>
         </section>
@@ -319,41 +420,72 @@ function Index() {
         <section id="galerie" className="scroll-mt-20 px-5 py-16 sm:py-20">
           <div className="mx-auto max-w-[92rem]">
             <div className="mb-10 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-              <div><p className="mb-3 text-xs font-bold uppercase text-primary">01 / Le portfolio</p><h2 className="font-display text-4xl uppercase leading-none tracking-normal text-balance sm:text-5xl">
-                Le regard Mody.
-              </h2></div>
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase text-primary">01 / Le portfolio</p>
+                <h2 className="font-display text-4xl uppercase leading-none tracking-normal text-balance sm:text-5xl">
+                  Le regard Mody.
+                </h2>
+              </div>
               <p className="max-w-[32ch] text-pretty text-sm font-medium text-muted-foreground">
                 Portraits, instants de vie et regards singuliers. L’univers de Mody, en images.
               </p>
             </div>
 
             <div className="home-gallery grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-              {(publishedPhotos.length > 0 ? publishedPhotos : frames).slice(0, 8).map((frame, index) => {
-                const isPublished = "url" in frame;
-                const image = isPublished ? frame.url : frame.src;
-                const content = (
-                  <figure className={`group w-full overflow-hidden rounded-lg ${isPublished ? "bg-muted" : frame.bg} photo-frame`}>
-                    <img
-                      src={image}
-                      alt={isPublished ? "Shooting récent de Mody" : frame.alt}
-                      loading="lazy"
-                      width={768}
-                      height={1024}
-                      decoding="async"
-                      className="home-gallery-image aspect-[3/4] w-full object-contain transition-transform duration-500"
-                    />
-                  </figure>
-                );
-                return isPublished ? (
-                  <Link className="home-gallery-item group min-w-0" key={frame.id} to="/shootings/$slug" params={{ slug: frame.slug }}>{content}<div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"><span className="text-sm font-bold">Shooting {String(index + 1).padStart(2, "0")}</span><ArrowUpRight className="size-4" /></div><p className="mt-1 text-xs text-muted-foreground">Voir la série</p></Link>
-                ) : (
-                  <div className="home-gallery-item min-w-0" key={frame.src}>{content}<div className="mt-3 flex justify-between text-sm font-bold"><span>{["Portrait", "Instants de rue", "Studio", "Éditorial"][index % 4]}</span><span className="text-muted-foreground">0{index + 1}</span></div></div>
-                );
-              })}
+              {(publishedPhotos.length > 0 ? publishedPhotos : frames)
+                .slice(0, 8)
+                .map((frame, index) => {
+                  const isPublished = "url" in frame;
+                  const image = isPublished ? frame.url : frame.src;
+                  const content = (
+                    <figure
+                      className={`group w-full overflow-hidden rounded-lg ${isPublished ? "bg-muted" : frame.bg} photo-frame`}
+                    >
+                      <img
+                        src={image}
+                        alt={isPublished ? "Shooting récent de Mody" : frame.alt}
+                        loading="lazy"
+                        width={768}
+                        height={1024}
+                        decoding="async"
+                        className="home-gallery-image aspect-[3/4] w-full object-contain transition-transform duration-500"
+                      />
+                    </figure>
+                  );
+                  return isPublished ? (
+                    <Link
+                      className="home-gallery-item group min-w-0"
+                      key={frame.id}
+                      to="/shootings/$slug"
+                      params={{ slug: frame.slug }}
+                    >
+                      {content}
+                      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                        <span className="text-sm font-bold">
+                          Shooting {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <ArrowUpRight className="size-4" />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">Voir la série</p>
+                    </Link>
+                  ) : (
+                    <div className="home-gallery-item min-w-0" key={frame.src}>
+                      {content}
+                      <div className="mt-3 flex justify-between text-sm font-bold">
+                        <span>
+                          {["Portrait", "Instants de rue", "Studio", "Éditorial"][index % 4]}
+                        </span>
+                        <span className="text-muted-foreground">0{index + 1}</span>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
             <div className="mt-8 flex justify-end">
               <Button asChild variant="outline" className="rounded-full">
-                <Link to="/shootings">Tous les shootings <ArrowRight aria-hidden="true" /></Link>
+                <Link to="/shootings">
+                  Tous les shootings <ArrowRight aria-hidden="true" />
+                </Link>
               </Button>
             </div>
           </div>
@@ -365,7 +497,9 @@ function Index() {
             {services.map((s) => (
               <div key={s.title} className={`rounded-lg p-7 ${s.cardClass}`}>
                 <h3 className="font-display text-2xl uppercase tracking-normal">{s.title}</h3>
-                <p className={`mt-3 max-w-[34ch] text-pretty text-sm leading-relaxed ${s.bodyClass}`}>
+                <p
+                  className={`mt-3 max-w-[34ch] text-pretty text-sm leading-relaxed ${s.bodyClass}`}
+                >
                   {s.body}
                 </p>
                 <p className={`mt-5 text-lg font-bold ${s.priceClass}`}>{s.price}</p>
@@ -375,7 +509,10 @@ function Index() {
         </section>
 
         {/* Tarifs */}
-        <section id="tarifs" className="scroll-mt-20 border-y-2 border-foreground bg-foreground px-5 py-16 text-cream sm:py-20">
+        <section
+          id="tarifs"
+          className="scroll-mt-20 border-y-2 border-foreground bg-foreground px-5 py-16 text-cream sm:py-20"
+        >
           <div className="mx-auto max-w-[92rem]">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -394,27 +531,45 @@ function Index() {
 
             <div className="grid gap-5 lg:grid-cols-2">
               {pricingSections.map((section) => (
-                <article key={section.title} className="overflow-hidden rounded-3xl border-2 border-cream bg-card text-foreground">
+                <article
+                  key={section.title}
+                  className="overflow-hidden rounded-3xl border-2 border-cream bg-card text-foreground"
+                >
                   <div className={`${section.headerClass} p-6`}>
-                    <h3 className="font-display text-4xl uppercase leading-none sm:text-5xl">{section.title}</h3>
+                    <h3 className="font-display text-4xl uppercase leading-none sm:text-5xl">
+                      {section.title}
+                    </h3>
                   </div>
                   <div className="divide-y-2 divide-foreground/15">
                     {section.offers.map((offer) => {
                       const formule = `${offer.label} — ${section.title} — ${offer.price}`;
                       return (
-                        <div key={formule} className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+                        <div
+                          key={formule}
+                          className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center"
+                        >
                           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                             <p className="text-xl font-bold">{offer.label}</p>
                             <span className="h-px min-w-0 flex-1 bg-foreground/15" />
                             <p className="text-2xl font-bold text-primary">{offer.price}</p>
                           </div>
                           <div className="flex gap-2">
-                            <Button type="button" variant="secondary" size="sm" className="rounded-full" onClick={() => selectOffer(formule)}>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => selectOffer(formule)}
+                            >
                               <CalendarDays aria-hidden="true" />
                               Choisir
                             </Button>
                             <Button asChild size="sm" className="rounded-full">
-                              <a href={createWhatsappHref(formule)} target="_blank" rel="noreferrer">
+                              <a
+                                href={createWhatsappHref(formule)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
                                 <MessageCircle aria-hidden="true" />
                                 WhatsApp
                               </a>
@@ -442,24 +597,42 @@ function Index() {
                 Réservation
               </p>
               <h2 className="font-display text-5xl uppercase leading-none text-balance sm:text-7xl">
-                Votre prochain<br />shooting commence ici.
+                Votre prochain
+                <br />
+                shooting commence ici.
               </h2>
               <p className="mt-5 max-w-[42ch] text-pretty text-base leading-relaxed text-muted-foreground">
-                Une date, une idée, une envie ? Parlons de votre séance. Mody vous recontactera pour confirmer les détails.
+                Une date, une idée, une envie ? Parlons de votre séance. Mody vous recontactera pour
+                confirmer les détails.
               </p>
               <div className="mt-8 border-t border-foreground/20 py-6">
-                <p className="text-xs font-bold uppercase text-muted-foreground">Vous préférez en parler ?</p>
-                <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-3 text-xl font-bold hover:text-primary sm:text-2xl"><MessageCircle className="size-5 shrink-0" />{WHATSAPP_DISPLAY}</a>
+                <p className="text-xs font-bold uppercase text-muted-foreground">
+                  Vous préférez en parler ?
+                </p>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-3 text-xl font-bold hover:text-primary sm:text-2xl"
+                >
+                  <MessageCircle className="size-5 shrink-0" />
+                  {WHATSAPP_DISPLAY}
+                </a>
               </div>
             </div>
 
-            <form onSubmit={handleReservationSubmit} className="min-w-0 border-t-2 border-foreground pt-6">
+            <form
+              onSubmit={handleReservationSubmit}
+              className="min-w-0 border-t-2 border-foreground pt-6"
+            >
               <div className="grid min-w-0 gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-bold">
                   Nom
                   <input
                     value={reservation.nom}
-                    onChange={(event) => setReservation((current) => ({ ...current, nom: event.target.value }))}
+                    onChange={(event) =>
+                      setReservation((current) => ({ ...current, nom: event.target.value }))
+                    }
                     className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                     autoComplete="name"
                     placeholder="Votre nom"
@@ -469,7 +642,9 @@ function Index() {
                   Téléphone
                   <input
                     value={reservation.telephone}
-                    onChange={(event) => setReservation((current) => ({ ...current, telephone: event.target.value }))}
+                    onChange={(event) =>
+                      setReservation((current) => ({ ...current, telephone: event.target.value }))
+                    }
                     className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                     type="tel"
                     autoComplete="tel"
@@ -482,7 +657,9 @@ function Index() {
                 Formule
                 <select
                   value={reservation.formule}
-                  onChange={(event) => setReservation((current) => ({ ...current, formule: event.target.value }))}
+                  onChange={(event) =>
+                    setReservation((current) => ({ ...current, formule: event.target.value }))
+                  }
                   className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary sm:px-4 sm:text-base"
                 >
                   {allOffers.map((offer) => (
@@ -493,44 +670,78 @@ function Index() {
                 </select>
               </label>
 
-              <label className="mt-4 grid gap-2 text-sm font-bold">
-                Date souhaitée
-                <input
-                  value={reservation.date}
-                  onChange={(event) => setReservation((current) => ({ ...current, date: event.target.value }))}
-                  className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Ex : samedi prochain, 18h"
-                />
-              </label>
+              <div className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-sm font-bold">
+                  Date souhaitée
+                  <input
+                    type="date"
+                    required
+                    value={reservation.date}
+                    onChange={(event) =>
+                      setReservation((current) => ({ ...current, date: event.target.value }))
+                    }
+                    className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Heure souhaitée
+                  <input
+                    type="time"
+                    required
+                    value={reservation.heure}
+                    onChange={(event) =>
+                      setReservation((current) => ({ ...current, heure: event.target.value }))
+                    }
+                    className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+              </div>
 
               <label className="mt-4 grid gap-2 text-sm font-bold">
                 Message
                 <textarea
                   value={reservation.message}
-                  onChange={(event) => setReservation((current) => ({ ...current, message: event.target.value }))}
+                  onChange={(event) =>
+                    setReservation((current) => ({ ...current, message: event.target.value }))
+                  }
                   className="min-h-32 min-w-0 w-full resize-y rounded-xl border-2 border-foreground bg-background px-4 py-3 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Lieu, style voulu, nombre de personnes..."
                 />
               </label>
 
               {feedback && (
-                <p className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${feedbackType === "success" ? "bg-mint text-cream" : "bg-primary text-primary-foreground"}`}>
+                <p
+                  className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${feedbackType === "success" ? "bg-mint text-cream" : "bg-primary text-primary-foreground"}`}
+                >
                   {feedback}
                 </p>
               )}
 
               <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <Button type="submit" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base">
+                <Button
+                  type="submit"
+                  className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base"
+                >
                   <Send aria-hidden="true" />
                   Envoyer ma demande
                 </Button>
-                <Button asChild variant="secondary" className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base sm:col-start-1">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base sm:col-start-1"
+                >
                   <a href={whatsappHref} target="_blank" rel="noreferrer">
                     <MessageCircle aria-hidden="true" />
                     WhatsApp Pro
                   </a>
                 </Button>
-                <Button type="button" variant="outline" className="h-12 rounded-full sm:col-start-2 sm:row-start-1" onClick={copyReservation} aria-label="Copier la demande">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 rounded-full sm:col-start-2 sm:row-start-1"
+                  onClick={copyReservation}
+                  aria-label="Copier la demande"
+                >
                   <Copy aria-hidden="true" />
                   <span className="sm:hidden">Copier la demande</span>
                 </Button>
@@ -540,7 +751,10 @@ function Index() {
         </section>
 
         {/* Contact CTA */}
-        <section id="contact" className="scroll-mt-20 border-y-2 border-foreground bg-mint px-5 py-12 sm:py-16">
+        <section
+          id="contact"
+          className="scroll-mt-20 border-y-2 border-foreground bg-mint px-5 py-12 sm:py-16"
+        >
           <div className="mx-auto max-w-[92rem]">
             <div className="grid items-center gap-8 md:grid-cols-2">
               <div>
@@ -550,12 +764,16 @@ function Index() {
                   chose de fort.
                 </h2>
                 <p className="mt-4 max-w-[40ch] text-pretty text-base leading-relaxed text-ink/80">
-                  Racontez-moi l'histoire que vous voulez raconter —
-                  j'apporterai l'appareil, la lumière et l'audace.
+                  Racontez-moi l'histoire que vous voulez raconter — j'apporterai l'appareil, la
+                  lumière et l'audace.
                 </p>
               </div>
               <div className="flex flex-col gap-4">
-                <Button asChild variant="secondary" className="h-auto rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-auto rounded-2xl px-6 py-4 text-lg ring-2 ring-foreground transition-transform hover:-translate-y-0.5"
+                >
                   <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">
                     <MessageCircle aria-hidden="true" />
                     {WHATSAPP_DISPLAY}
@@ -563,7 +781,12 @@ function Index() {
                 </Button>
                 <div className="flex flex-wrap gap-3">
                   {socialLinks.map((social) => (
-                    <Button key={social.label} asChild variant="outline" className="rounded-full bg-foreground text-cream hover:bg-primary hover:text-primary-foreground">
+                    <Button
+                      key={social.label}
+                      asChild
+                      variant="outline"
+                      className="rounded-full bg-foreground text-cream hover:bg-primary hover:text-primary-foreground"
+                    >
                       <a href={social.href} target="_blank" rel="noreferrer">
                         {social.label}
                       </a>
@@ -578,10 +801,17 @@ function Index() {
 
       <footer className="border-t-2 border-foreground px-5 py-8">
         <div className="mx-auto flex max-w-[92rem] flex-wrap items-center justify-between gap-4">
-          <p className="text-sm font-medium text-muted-foreground">
-            © 2026 Mody Photographie
-          </p>
-          <div className="flex items-center gap-4"><p className="text-sm font-medium text-muted-foreground">Every shoot is a masterpiece.</p><Button asChild variant="ghost" size="icon" title="Espace Mody"><Link to="/admin" aria-label="Ouvrir l’espace Mody"><LockKeyhole className="size-4" /></Link></Button></div>
+          <p className="text-sm font-medium text-muted-foreground">© 2026 Mody Photographie</p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm font-medium text-muted-foreground">
+              Every shoot is a masterpiece.
+            </p>
+            <Button asChild variant="ghost" size="icon" title="Espace Mody">
+              <Link to="/admin" aria-label="Ouvrir l’espace Mody">
+                <LockKeyhole className="size-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </footer>
     </div>
@@ -594,26 +824,73 @@ function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-foreground/20 bg-background/95 backdrop-blur-md">
       <div className="mx-auto grid max-w-[92rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-4 sm:flex sm:justify-between sm:px-10">
-        <Link to="/" className="min-w-0" aria-label="Mody Photography, accueil"><span className="inline-block rounded-full bg-ink px-3 py-1.5"><img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" /></span></Link>
-        <nav aria-label="Navigation principale" className="hidden items-center gap-6 text-sm font-medium lg:flex">
-          <a href="#galerie" className="hover:text-primary">Portfolio</a>
-          <Link to="/shootings" className="hover:text-primary">Shootings</Link>
-          <a href="#services" className="hover:text-primary">Séances</a>
-          <a href="#tarifs" className="hover:text-primary">Tarifs</a>
-          <a href="#contact" className="hover:text-primary">Contact</a>
+        <Link to="/" className="min-w-0" aria-label="Mody Photography, accueil">
+          <span className="inline-block rounded-full bg-ink px-3 py-1.5">
+            <img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" />
+          </span>
+        </Link>
+        <nav
+          aria-label="Navigation principale"
+          className="hidden items-center gap-6 text-sm font-medium lg:flex"
+        >
+          <a href="#galerie" className="hover:text-primary">
+            Portfolio
+          </a>
+          <Link to="/shootings" className="hover:text-primary">
+            Shootings
+          </Link>
+          <a href="#services" className="hover:text-primary">
+            Séances
+          </a>
+          <a href="#tarifs" className="hover:text-primary">
+            Tarifs
+          </a>
+          <a href="#contact" className="hover:text-primary">
+            Contact
+          </a>
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <Button asChild className="h-10 rounded-full px-4 font-bold"><a href="#reservation" onClick={closeMenu}>Réserver <ArrowUpRight aria-hidden="true" /></a></Button>
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={menuOpen} aria-controls="home-mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</Button>
+          <Button asChild className="h-10 rounded-full px-4 font-bold">
+            <a href="#reservation" onClick={closeMenu}>
+              Réserver <ArrowUpRight aria-hidden="true" />
+            </a>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={menuOpen}
+            aria-controls="home-mobile-nav"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X /> : <Menu />}
+          </Button>
         </div>
       </div>
-      {menuOpen && <nav id="home-mobile-nav" aria-label="Navigation mobile" className="grid border-t border-foreground/15 px-5 pb-5 pt-2 text-base font-medium lg:hidden">
-        <a href="#galerie" onClick={closeMenu} className="py-3">Portfolio</a>
-        <Link to="/shootings" onClick={closeMenu} className="py-3">Shootings</Link>
-        <a href="#services" onClick={closeMenu} className="py-3">Séances</a>
-        <a href="#tarifs" onClick={closeMenu} className="py-3">Tarifs</a>
-        <a href="#contact" onClick={closeMenu} className="py-3">Contact</a>
-      </nav>}
+      {menuOpen && (
+        <nav
+          id="home-mobile-nav"
+          aria-label="Navigation mobile"
+          className="grid border-t border-foreground/15 px-5 pb-5 pt-2 text-base font-medium lg:hidden"
+        >
+          <a href="#galerie" onClick={closeMenu} className="py-3">
+            Portfolio
+          </a>
+          <Link to="/shootings" onClick={closeMenu} className="py-3">
+            Shootings
+          </Link>
+          <a href="#services" onClick={closeMenu} className="py-3">
+            Séances
+          </a>
+          <a href="#tarifs" onClick={closeMenu} className="py-3">
+            Tarifs
+          </a>
+          <a href="#contact" onClick={closeMenu} className="py-3">
+            Contact
+          </a>
+        </nav>
+      )}
     </header>
   );
 }

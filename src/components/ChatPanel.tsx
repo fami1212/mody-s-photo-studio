@@ -14,6 +14,8 @@ type Props = {
 export function ChatPanel({ mode, title, greeting }: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [bookingInteractions, setBookingInteractions] = useState<string[]>([]);
+  const [handoff, setHandoff] = useState(false);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -28,11 +30,30 @@ export function ChatPanel({ mode, title, greeting }: Props) {
   );
   const { messages, sendMessage, status, error, stop } = useChat({ transport });
   const busy = status === "submitted" || status === "streaming";
+  const whatsappText = bookingInteractions.join("\n");
+  const whatsappHref = useMemo(
+    () =>
+      `https://wa.me/212645914716?text=${encodeURIComponent(
+        `Bonjour Mody, je souhaite continuer ma demande avec vous.${whatsappText ? `\n${whatsappText}` : ""}`,
+      )}`,
+    [whatsappText],
+  );
 
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = input.trim().slice(0, 1000);
     if (!text || busy) return;
+
+    if (mode === "booking") {
+      const nextInteractions = [...bookingInteractions, text];
+      setBookingInteractions(nextInteractions);
+      setInput("");
+      if (nextInteractions.length >= 2) {
+        setHandoff(true);
+        return;
+      }
+    }
+
     sendMessage({ text });
     setInput("");
   }
@@ -77,27 +98,63 @@ export function ChatPanel({ mode, title, greeting }: Props) {
                 </div>
               </div>
             ))}
-            {status === "submitted" && <p className="text-muted-foreground">…</p>}
-            {error && <p className="text-destructive">Assistant indisponible pour le moment.</p>}
-          </div>
-          <form onSubmit={submit} className="flex gap-2 border-t-2 border-foreground p-3">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              maxLength={1000}
-              placeholder="Écrivez votre message…"
-              className="min-w-0 flex-1 rounded-full border-2 border-foreground bg-background px-4 py-2 text-sm outline-none"
-            />
-            {busy ? (
-              <button type="button" onClick={stop} className="rounded-full border-2 border-foreground px-3 text-xs font-bold">
-                Stop
-              </button>
-            ) : (
-              <button type="submit" aria-label="Envoyer" className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
-                <Send className="size-4" />
-              </button>
+            {handoff && bookingInteractions[1] && (
+              <div className="flex justify-end">
+                <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-foreground px-3 py-2 text-background">
+                  {bookingInteractions[1]}
+                </p>
+              </div>
             )}
-          </form>
+            {status === "submitted" && <p className="text-muted-foreground">…</p>}
+            {mode === "booking" && (handoff || error) ? (
+              <div className="space-y-2 rounded-2xl border-2 border-foreground bg-secondary p-3">
+                <p className="leading-relaxed">
+                  {handoff
+                    ? "Pour poursuivre votre demande, Mody vous répond directement sur WhatsApp."
+                    : "L’assistant est momentanément indisponible. Vous pouvez continuer directement avec Mody."}
+                </p>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-4 py-2 font-bold text-primary-foreground"
+                >
+                  <MessageCircle className="size-4" aria-hidden="true" />
+                  Continuer sur WhatsApp
+                </a>
+              </div>
+            ) : error ? (
+              <p className="text-destructive">Assistant indisponible pour le moment.</p>
+            ) : null}
+          </div>
+          {!(mode === "booking" && handoff) && (
+            <form onSubmit={submit} className="flex gap-2 border-t-2 border-foreground p-3">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                maxLength={1000}
+                placeholder="Écrivez votre message…"
+                className="min-w-0 flex-1 rounded-full border-2 border-foreground bg-background px-4 py-2 text-sm outline-none"
+              />
+              {busy ? (
+                <button
+                  type="button"
+                  onClick={stop}
+                  className="rounded-full border-2 border-foreground px-3 text-xs font-bold"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  aria-label="Envoyer"
+                  className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground"
+                >
+                  <Send className="size-4" />
+                </button>
+              )}
+            </form>
+          )}
         </section>
       )}
     </>

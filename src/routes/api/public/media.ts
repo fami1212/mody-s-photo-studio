@@ -6,7 +6,15 @@ export const Route = createFileRoute("/api/public/media")({
     handlers: {
       GET: async ({ request }) => {
         const params = new URL(request.url).searchParams;
-        const parsed = z.object({ kind: z.enum(["hero", "home-share", "shooting"]), slug: z.string().max(120).regex(/^[a-z0-9-]+$/).optional() }).safeParse({ kind: params.get("kind"), slug: params.get("slug") ?? undefined });
+        const parsed = z.object({
+          kind: z.enum(["hero", "home-share", "shooting"]),
+          slug: z.string().max(120).regex(/^[a-z0-9-]+$/).optional(),
+          version: z.string().uuid().optional(),
+        }).safeParse({
+          kind: params.get("kind"),
+          slug: params.get("slug") ?? undefined,
+          version: params.get("v") ?? undefined,
+        });
         if (!parsed.success) return new Response("Invalid request", { status: 400 });
         const { publicMediaClient } = await import("@/lib/public-media.server");
         const url = process.env["SUPABASE_URL"];
@@ -25,8 +33,10 @@ export const Route = createFileRoute("/api/public/media")({
           path = parsed.data.kind === "hero" ? data?.hero_path ?? null : data?.share_path ?? null;
         }
         if (!path) return new Response("Not found", { status: 404 });
-        if (!/^marketing\/[0-9a-f-]{36}-(hero|share)\.jpg$/.test(path)) return new Response("Not found", { status: 404 });
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const pathMatch = path.match(/^marketing\/([0-9a-f-]{36})-(hero|share)\.jpg$/);
+        if (!pathMatch || (parsed.data.version && pathMatch[1] !== parsed.data.version)) {
+          return new Response("Not found", { status: 404 });
+        }
         const { data, error } = await client.storage
           .from("photos")
           .download(path);
@@ -35,7 +45,10 @@ export const Route = createFileRoute("/api/public/media")({
           console.error("Failed to download marketing image:", error);
           return new Response("Not found", { status: 404 });
         }
-        return new Response(data, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400, immutable", "X-Content-Type-Options": "nosniff" } });
+        const cacheControl = parsed.data.version
+          ? "public, max-age=31536000, immutable"
+          : "no-cache";
+        return new Response(data, { headers: { "Content-Type": "image/jpeg", "Cache-Control": cacheControl, "X-Content-Type-Options": "nosniff" } });
       }
     }
   },

@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Copy, Loader2, Star, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -277,10 +276,14 @@ function FoldersPage() {
   }
 
   return (
-    <main className="mx-auto grid max-w-[92rem] gap-6 px-4 py-8 sm:px-5 lg:grid-cols-[22rem_1fr]">
-      <section className="space-y-5">
-        <div className="rounded-3xl border-2 border-foreground bg-card p-5">
-          <h2 className="font-display text-2xl uppercase tracking-tight">Nouveau dossier</h2>
+    <main className="admin-page grid min-w-0 gap-4 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:grid-cols-[minmax(17rem,0.34fr)_minmax(0,0.66fr)]">
+      <header className="md:col-span-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bibliothèque photo</p>
+        <h1 className="admin-page-title mt-2 font-display uppercase">Dossiers & photos</h1>
+      </header>
+      <section className="min-w-0 space-y-4">
+        <div className="admin-card">
+          <h1 className="font-display text-2xl uppercase tracking-tight">Nouveau dossier</h1>
           <div className="mt-4 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="folder-name">Nom</Label>
@@ -300,20 +303,23 @@ function FoldersPage() {
                 placeholder="Lieu, date, notes…"
               />
             </div>
-            <Button className="w-full rounded-full" onClick={createFolder}>
+            <Button className="admin-touch-target w-full rounded-xl" onClick={createFolder}>
               Créer le dossier
             </Button>
           </div>
         </div>
 
-        <div className="rounded-3xl border-2 border-foreground bg-card p-5">
-          <h2 className="font-display text-2xl uppercase tracking-tight">Dossiers</h2>
+        <div className="admin-card">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-2xl uppercase tracking-tight">Dossiers</h2>
+            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold">{folders.length}</span>
+          </div>
           {loading ? (
             <p className="mt-4 text-sm text-muted-foreground">Chargement…</p>
           ) : folders.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">Aucun dossier pour le moment.</p>
           ) : (
-            <ul className="mt-4 space-y-2">
+            <ul className="admin-nav-scroll mt-4 max-h-72 space-y-2 overflow-y-auto pr-1">
               {folders.map((folder) => (
                 <li
                   key={folder.id}
@@ -331,7 +337,7 @@ function FoldersPage() {
                   <button
                     type="button"
                     onClick={() => renameFolder(folder)}
-                    className="text-xs underline underline-offset-2"
+                    className="admin-touch-target shrink-0 rounded-lg px-2 text-xs font-semibold underline underline-offset-2"
                   >
                     Renommer
                   </button>
@@ -339,6 +345,7 @@ function FoldersPage() {
                     type="button"
                     onClick={() => deleteFolder(folder)}
                     aria-label={`Supprimer ${folder.name}`}
+                    className="admin-touch-target grid w-10 shrink-0 place-items-center rounded-lg hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -349,22 +356,22 @@ function FoldersPage() {
         </div>
       </section>
 
-      <section className="space-y-5">
+      <section className="min-w-0 space-y-4">
         {!active ? (
-          <p className="rounded-3xl border-2 border-dashed border-foreground/40 p-8 text-center text-muted-foreground">
+          <p className="admin-card border-dashed py-12 text-center text-muted-foreground">
             Choisissez ou créez un dossier pour envoyer des photos.
           </p>
         ) : (
           <>
-            <div className="rounded-3xl border-2 border-foreground bg-card p-5">
+            <div className="admin-card">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-3xl uppercase tracking-tight">{active.name}</h2>
-                  <p className="text-sm text-muted-foreground">
+                  <h2 className="break-words font-display text-2xl uppercase tracking-tight sm:text-3xl">{active.name}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {photos.length} photo(s) dans ce dossier
                   </p>
                 </div>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">
+                <label className="admin-touch-target inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground sm:w-auto">
                   {uploading ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
@@ -381,13 +388,13 @@ function FoldersPage() {
                   />
                 </label>
                 {photos.some((p) => !p.thumb_path) && (
-                  <Button type="button" variant="outline" className="rounded-full" onClick={optimizeOld} disabled={uploading}>
+                  <Button type="button" variant="outline" className="admin-touch-target w-full rounded-xl sm:w-auto" onClick={optimizeOld} disabled={uploading}>
                     Optimiser les anciennes photos
                   </Button>
                 )}
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                 {photos.map((photo) => (
                   <figure
                     key={photo.id}
@@ -403,7 +410,7 @@ function FoldersPage() {
                       <button
                         type="button"
                         onClick={() => setCover(photo)}
-                        className="inline-flex items-center gap-1 text-xs font-bold"
+                        className="admin-touch-target inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold"
                       >
                         <Star
                           className={`size-3.5 ${active.cover_photo_id === photo.id ? "fill-primary text-primary" : ""}`}
@@ -414,6 +421,7 @@ function FoldersPage() {
                         type="button"
                         onClick={() => deletePhoto(photo)}
                         aria-label="Supprimer la photo"
+                        className="admin-touch-target grid w-10 place-items-center rounded-lg hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -423,12 +431,12 @@ function FoldersPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border-2 border-foreground bg-card p-5">
+            <div className="admin-card">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-display text-2xl uppercase tracking-tight">
                   Liens de téléchargement
                 </h2>
-                <Button variant="secondary" className="rounded-full" onClick={createShareLink}>
+                <Button variant="secondary" className="admin-touch-target rounded-xl" onClick={createShareLink}>
                   Créer un lien
                 </Button>
               </div>
