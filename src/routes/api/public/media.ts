@@ -6,40 +6,54 @@ export const Route = createFileRoute("/api/public/media")({
     handlers: {
       GET: async ({ request }) => {
         const params = new URL(request.url).searchParams;
-        const parsed = z.object({
-          kind: z.enum(["hero", "home-share", "shooting"]),
-          slug: z.string().max(120).regex(/^[a-z0-9-]+$/).optional(),
-          version: z.string().uuid().optional(),
-        }).safeParse({
-          kind: params.get("kind"),
-          slug: params.get("slug") ?? undefined,
-          version: params.get("v") ?? undefined,
-        });
+        const parsed = z
+          .object({
+            kind: z.enum(["hero", "home-share", "shooting"]),
+            slug: z
+              .string()
+              .max(120)
+              .regex(/^[a-z0-9-]+$/)
+              .optional(),
+            version: z.string().uuid().optional(),
+          })
+          .safeParse({
+            kind: params.get("kind"),
+            slug: params.get("slug") ?? undefined,
+            version: params.get("v") ?? undefined,
+          });
         if (!parsed.success) return new Response("Invalid request", { status: 400 });
-        const { publicMediaClient } = await import("@/lib/public-media.server");
-        const url = process.env["SUPABASE_URL"];
-        const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-        if (!url || !key) return new Response("Unavailable", { status: 503 });
-        const client = publicMediaClient(url, key);
+        const { getSupabasePublicConfig, publicMediaClient } =
+          await import("@/lib/public-media.server");
+        const config = getSupabasePublicConfig();
+        if (!config) return new Response("Unavailable", { status: 503 });
+        const client = publicMediaClient(config.url, config.key);
         let path: string | null = null;
         if (parsed.data.kind === "shooting") {
           if (!parsed.data.slug) return new Response("Not found", { status: 404 });
-          const { data, error } = await client.from("shooting_seo").select("image_path").eq("slug", parsed.data.slug).eq("active", true).maybeSingle();
+          const { data, error } = await client
+            .from("shooting_seo")
+            .select("image_path")
+            .eq("slug", parsed.data.slug)
+            .eq("active", true)
+            .maybeSingle();
           if (error) return new Response("Unavailable", { status: 503 });
           path = data?.image_path ?? null;
         } else {
-          const { data, error } = await client.from("site_appearance").select("hero_path, share_path").eq("id", "home").maybeSingle();
+          const { data, error } = await client
+            .from("site_appearance")
+            .select("hero_path, share_path")
+            .eq("id", "home")
+            .maybeSingle();
           if (error) return new Response("Unavailable", { status: 503 });
-          path = parsed.data.kind === "hero" ? data?.hero_path ?? null : data?.share_path ?? null;
+          path =
+            parsed.data.kind === "hero" ? (data?.hero_path ?? null) : (data?.share_path ?? null);
         }
         if (!path) return new Response("Not found", { status: 404 });
         const pathMatch = path.match(/^marketing\/([0-9a-f-]{36})-(hero|share)\.jpg$/);
         if (!pathMatch || (parsed.data.version && pathMatch[1] !== parsed.data.version)) {
           return new Response("Not found", { status: 404 });
         }
-        const { data, error } = await client.storage
-          .from("photos")
-          .download(path);
+        const { data, error } = await client.storage.from("photos").download(path);
 
         if (error || !data) {
           console.error("Failed to download marketing image:", error);
@@ -48,8 +62,14 @@ export const Route = createFileRoute("/api/public/media")({
         const cacheControl = parsed.data.version
           ? "public, max-age=31536000, immutable"
           : "no-cache";
-        return new Response(data, { headers: { "Content-Type": "image/jpeg", "Cache-Control": cacheControl, "X-Content-Type-Options": "nosniff" } });
-      }
-    }
+        return new Response(data, {
+          headers: {
+            "Content-Type": "image/jpeg",
+            "Cache-Control": cacheControl,
+            "X-Content-Type-Options": "nosniff",
+          },
+        });
+      },
+    },
   },
 });

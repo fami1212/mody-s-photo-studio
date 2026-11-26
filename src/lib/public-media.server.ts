@@ -1,6 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
+export function getSupabasePublicConfig() {
+  const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
+  const key =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  return url && key ? { url, key } : null;
+}
+
 export function publicMediaClient(url: string, key: string) {
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -17,7 +24,7 @@ export function publicMediaClient(url: string, key: string) {
 }
 
 export function createSupabaseServerAdminClient() {
-  const url = process.env["SUPABASE_URL"];
+  const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
   const key = process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? process.env["SUPABASE_SECRET_KEY"];
   if (!url || !key) {
     throw new Error(

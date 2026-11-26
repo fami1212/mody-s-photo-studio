@@ -26,15 +26,11 @@ const SIGNED_TTL = 60 * 60 * 24; // 24h
 type PublicPhoto = { id: string; url: string; downloadUrl?: string; fileName?: string };
 type GalleryClient = SupabaseClient<Database>;
 
-async function getClient(key: string | undefined): Promise<GalleryClient> {
-  const url = process.env["SUPABASE_URL"];
-  if (!url || !key) throw new Error("Configuration Supabase serveur indisponible.");
-  const { publicMediaClient } = await import("./public-media.server");
-  return publicMediaClient(url, key);
-}
-
 async function getPublicClient(): Promise<GalleryClient> {
-  return getClient(process.env["SUPABASE_PUBLISHABLE_KEY"]);
+  const { getSupabasePublicConfig, publicMediaClient } = await import("./public-media.server");
+  const config = getSupabasePublicConfig();
+  if (!config) throw new Error("Configuration Supabase publique indisponible.");
+  return publicMediaClient(config.url, config.key);
 }
 
 async function getAdmin(): Promise<GalleryClient> {
