@@ -156,7 +156,7 @@
 
 .home-hero { height: min(740px, 80svh); min-height: 580px; }
 .home-hero-shade { background: var(--hero-scrim); }
-.home-hero-photo { object-position: 65% center; }
+.home-hero-photo { object-position: 65% 20%; }
 .home-hero-title { font-size: 104px; line-height: 1; letter-spacing: 0; }
 .home-gallery-item:nth-child(even) { padding-top: 48px; }
 html { scroll-behavior: smooth; }

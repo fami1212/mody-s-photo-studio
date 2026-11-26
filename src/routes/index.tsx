@@ -183,8 +183,8 @@ const reservationSchema = z.object({
     .string()
     .trim()
     .regex(/^[+0-9 ().-]{8,24}$/, "Ajoutez un numéro de téléphone valide."),
-  date: z.string().trim().min(1, "Ajoutez une date ou une période." ).max(40, "La date est trop longue."),
-  formule: z.string().trim().min(1, "Choisissez une formule." ).max(140, "La formule est trop longue."),
+  date: z.string().trim().min(1, "Ajoutez une date ou une période.").max(40, "La date est trop longue."),
+  formule: z.string().trim().min(1, "Choisissez une formule.").max(140, "La formule est trop longue."),
   message: z.string().trim().max(500, "Le message est trop long."),
 });
 
@@ -271,7 +271,15 @@ function Index() {
       <main>
         {/* Hero */}
         <section className="home-hero relative isolate overflow-hidden bg-ink text-cream">
-          <img src={customHero ? "/api/public/media?kind=hero" : heroMody} alt={customHero ? "Photo d’accueil de Mody Photography" : "Inspiration photographique : portrait avec un appareil argentique"} width={1200} height={768} fetchPriority="high" decoding="async" className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
+          <img
+            src={customHero ? "/api/public/media?kind=hero" : heroMody}
+            alt={customHero ? "Photo d’accueil de Mody Photography" : "Inspiration photographique : portrait avec un appareil argentique"}
+            width={1200}
+            height={768}
+            fetchPriority="high"
+            decoding="async"
+            className="home-hero-photo absolute inset-0 -z-20 h-full w-full object-cover object-[50%_15%]"
+          />
           <div className="home-hero-shade absolute inset-0 -z-10" />
           <div className="home-hero-content mx-auto flex h-full max-w-[92rem] flex-col justify-between px-5 py-8 sm:px-10 sm:py-10">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-xs font-bold uppercase">
@@ -332,7 +340,7 @@ function Index() {
                       width={768}
                       height={1024}
                       decoding="async"
-                      className="home-gallery-image aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      className="home-gallery-image aspect-[3/4] w-full object-contain transition-transform duration-500"
                     />
                   </figure>
                 );
