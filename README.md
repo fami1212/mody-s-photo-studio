@@ -31,7 +31,8 @@ Configurez les variables suivantes dans les paramètres Vercel, pour chaque envi
 
 - `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` pour le client navigateur.
 - `SUPABASE_URL` et `SUPABASE_PUBLISHABLE_KEY` pour les fonctions serveur.
-- `SUPABASE_SERVICE_ROLE_KEY` ou `SUPABASE_SECRET_KEY` côté serveur uniquement, pour le rate limiting et les opérations privées. Ne préfixez jamais cette clé avec `VITE_`.
-- `LOVABLE_API_KEY` côté serveur pour activer les assistants IA. Sans cette clé, l’assistant public propose WhatsApp au lieu de planter.
+- `SUPABASE_SERVICE_ROLE_KEY` ou `SUPABASE_SECRET_KEY` côté serveur uniquement, pour les opérations privées. Ne préfixez jamais cette clé avec `VITE_`.
 
-L’assistant public répond à une première question tarifaire. À la deuxième interaction, ou si le service IA échoue, il prépare le message et redirige vers WhatsApp. Le rate limiting serveur reste actif (120 requêtes par adresse IP et par heure). Appliquez les migrations Supabase du dépôt avant la mise en production.
+L’assistant admin ne dépend d’aucun fournisseur IA ni de crédits. Il répond à des commandes prédéfinies : résumé des réservations, liste des demandes, dossiers et liens actifs, changement de statut après confirmation, et modèles de publications ou de réponses WhatsApp. Les textes sont des modèles à personnaliser, pas de la rédaction IA libre. L’application et Supabase doivent toutefois rester disponibles.
+
+Le chatbot public répond sans appel à un fournisseur IA et sans quota de messages. Il renseigne les tarifs officiels, les déplacements et les moyens de réservation; il ne consulte pas l’agenda et ne confirme pas de créneau. Les questions hors de cette FAQ sont orientées vers WhatsApp. Les réponses sont prédéfinies et ne constituent pas une conversation IA libre.

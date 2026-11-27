@@ -24,6 +24,7 @@ const tokenSchema = z.object({
 const SIGNED_TTL = 60 * 60 * 24; // 24h
 
 type PublicPhoto = { id: string; url: string; downloadUrl?: string; fileName?: string };
+type HomeShootingPhoto = PublicPhoto & { slug: string; title: string };
 type GalleryClient = SupabaseClient<Database>;
 
 async function getPublicClient(): Promise<GalleryClient> {
@@ -66,50 +67,56 @@ async function signPaths(
   return map;
 }
 
-/** Latest photos from published posts — used by the public home gallery. */
+/** One cover photo per recent published shooting, shuffled for the public home gallery. */
 export const listRecentPublishedPhotos = createServerFn({ method: "GET" }).handler(async () => {
   const client = await getPublicClient();
   const { data: posts, error: postsError } = await client
     .from("posts")
-    .select("id, slug, title")
+    .select("id, slug, title, cover_photo_id")
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(12);
   if (postsError) throw postsError;
-  if (!posts || posts.length === 0) return { photos: [] as (PublicPhoto & { slug: string })[] };
+  if (!posts?.length) return { photos: [] as HomeShootingPhoto[] };
 
-  const { data: links, error: linksError } = await client
-    .from("post_photos")
-    .select(
-      "post_id, photo_id, position, photos(id, storage_path, thumb_path, display_path, width, height)",
-    )
-    .in(
-      "post_id",
-      posts.map((p) => p.id),
-    )
-    .order("position", { ascending: true })
-    .limit(24);
-  if (linksError) throw linksError;
+  const coverIds = posts
+    .map((post) => post.cover_photo_id)
+    .filter((id): id is string => Boolean(id));
+  if (!coverIds.length) return { photos: [] as HomeShootingPhoto[] };
 
-  const rows = (links ?? []).filter((l) => l.photos);
+  const { data: covers, error: coversError } = await client
+    .from("photos")
+    .select("id, storage_path, thumb_path, display_path")
+    .in("id", coverIds);
+  if (coversError) throw coversError;
+
+  const coversById = new Map((covers ?? []).map((photo) => [photo.id, photo]));
+  const selected = posts.flatMap((post) => {
+    const cover = post.cover_photo_id ? coversById.get(post.cover_photo_id) : null;
+    return cover
+      ? [{ id: cover.id, slug: post.slug, title: post.title, path: pick(cover, "thumb") }]
+      : [];
+  });
   const signed = await signPaths(
     client,
-    rows.map((l) => pick(l.photos as any, "thumb")),
+    selected.map((photo) => photo.path),
   );
-  const bySlug = new Map(posts.map((p) => [p.id, p.slug]));
+  const photos: HomeShootingPhoto[] = selected.flatMap((photo) => {
+    const url = signed[photo.path];
+    return url ? [{ id: photo.id, slug: photo.slug, title: photo.title, url }] : [];
+  });
 
-  return {
-    photos: rows
-      .map((l) => {
-        const photo = l.photos as any;
-        const url = signed[pick(photo, "thumb")];
-        return url
-          ? { id: photo.id as string, url, slug: bySlug.get(l.post_id as string) ?? "" }
-          : null;
-      })
-      .filter(Boolean)
-      .slice(0, 8) as (PublicPhoto & { slug: string })[],
-  };
+  for (let index = photos.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const currentPhoto = photos[index];
+    const randomPhoto = photos[randomIndex];
+    if (currentPhoto && randomPhoto) {
+      photos[index] = randomPhoto;
+      photos[randomIndex] = currentPhoto;
+    }
+  }
+
+  return { photos };
 });
 
 /** All published shootings for /shootings. */

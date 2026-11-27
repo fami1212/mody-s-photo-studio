@@ -53,7 +53,10 @@ function AdminLayout() {
               <span className="block text-xs text-muted-foreground">Espace studio</span>
             </span>
           </Link>
-          <nav aria-label="Navigation admin" className="admin-nav-scroll col-span-2 flex min-w-0 gap-1 overflow-x-auto md:col-span-1 md:justify-center">
+          <nav
+            aria-label="Navigation admin"
+            className="admin-nav-scroll col-span-2 flex min-w-0 gap-1 overflow-x-auto md:col-span-1 md:justify-center"
+          >
             {adminNavigation.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
@@ -67,7 +70,12 @@ function AdminLayout() {
               </Link>
             ))}
           </nav>
-          <Button variant="ghost" className="admin-touch-target gap-2 px-2 sm:px-3" onClick={signOut} aria-label="Se déconnecter">
+          <Button
+            variant="ghost"
+            className="admin-touch-target gap-2 px-2 sm:px-3"
+            onClick={signOut}
+            aria-label="Se déconnecter"
+          >
             <LogOut aria-hidden="true" />
             <span className="hidden sm:inline">Déconnexion</span>
           </Button>
@@ -77,7 +85,7 @@ function AdminLayout() {
       <ChatPanel
         mode="admin"
         title="Assistant Mody"
-        greeting="Bonjour Mody ! Je peux résumer vos réservations, changer un statut, lister vos dossiers et liens, ou rédiger une publication ou une réponse WhatsApp."
+        greeting="Bonjour Mody ! Je fonctionne sans IA externe ni crédits. Je peux résumer vos réservations, lister les dossiers et liens actifs, préparer des textes modèles, et guider le changement d’un statut avec confirmation."
       />
     </div>
   );

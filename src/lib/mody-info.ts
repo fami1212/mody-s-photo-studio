@@ -8,14 +8,32 @@ export const STATUS_LABELS: Record<BookingStatus, string> = {
   cancelled: "Annulée",
 };
 
+export const MODY_PRICES = {
+  weddings: [
+    { photos: 30, price: 800 },
+    { photos: 60, price: 1500 },
+    { photos: 80, price: 2000 },
+  ],
+  studio: [
+    { photos: 4, price: 200 },
+    { photos: 8, price: 400 },
+    { photos: 10, price: 500 },
+  ],
+  videoReel: 300,
+} as const;
+
+function formatPhotoPrices(packages: readonly { photos: number; price: number }[]) {
+  return packages.map(({ photos, price }) => `${photos} photos ${price} dh`).join(" ; ");
+}
+
 export const MODY_FACTS = `
 Mody est photographe (marque « Mody Photography », slogan « Every shoot is a masterpiece »), basé à Casablanca.
 WhatsApp Pro : +212 6 45 91 47 16 (https://wa.me/212645914716).
 Réseaux : TikTok @modyphotographer, Instagram @moomojr, Snapchat.
 
 TARIFS (en dirhams, dh) :
-Mariages & Baptême : 30 photos 800 dh ; 60 photos 1500 dh ; 80 photos 2000 dh ; Vidéo Réel 300 dh.
+Mariages & Baptême : ${formatPhotoPrices(MODY_PRICES.weddings)} ; Vidéo Réel ${MODY_PRICES.videoReel} dh.
 Déplacement inclus partout à Casablanca. Hors Casablanca, le client assure les frais de transport.
-Studio - Extérieurs : 4 photos 200 dh ; 8 photos 400 dh ; 10 photos 500 dh ; Vidéo Réel 300 dh.
+Studio - Extérieurs : ${formatPhotoPrices(MODY_PRICES.studio)} ; Vidéo Réel ${MODY_PRICES.videoReel} dh.
 Pour les shootings en extérieur, le client assure les frais de transport.
 `.trim();

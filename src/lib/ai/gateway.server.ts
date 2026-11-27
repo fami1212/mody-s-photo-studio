@@ -2,19 +2,41 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId } from "./run-id.server";
 
-export const CHAT_MODEL = "openai/gpt-6-astra";
+const LOVABLE_CHAT_MODEL = "openai/gpt-6-astra";
+const OPENAI_CHAT_MODEL = "gpt-4o-mini";
 
-export function createGatewayModel(request: Request) {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("LOVABLE_API_KEY manquant");
-  const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
-  const provider = createOpenAI({
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    apiKey,
-    headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: runIdFetch.fetch,
-  });
-  return { model: provider.responses(CHAT_MODEL), runIdFetch };
+export function hasAiProviderKey() {
+  return Boolean(process.env["LOVABLE_API_KEY"] || process.env["OPENAI_API_KEY"]);
+}
+
+export function createAiModel(request: Request) {
+  const lovableApiKey = process.env["LOVABLE_API_KEY"];
+  if (lovableApiKey) {
+    const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
+    const provider = createOpenAI({
+      baseURL: "https://ai.gateway.lovable.dev/v1",
+      apiKey: lovableApiKey,
+      headers: {
+        "Lovable-API-Key": lovableApiKey,
+        "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+      },
+      fetch: runIdFetch.fetch,
+    });
+    return {
+      model: provider.responses(LOVABLE_CHAT_MODEL),
+      providerOptions: responsesOptions,
+      runIdFetch,
+    };
+  }
+
+  const openAiApiKey = process.env["OPENAI_API_KEY"];
+  if (!openAiApiKey) throw new Error("LOVABLE_API_KEY ou OPENAI_API_KEY manquant.");
+
+  const provider = createOpenAI({ apiKey: openAiApiKey });
+  return {
+    model: provider.responses(OPENAI_CHAT_MODEL),
+    providerOptions: openAiResponsesOptions,
+  };
 }
 
 export const responsesOptions = {
@@ -24,6 +46,12 @@ export const responsesOptions = {
     reasoningSummary: "auto",
     store: false,
     include: ["reasoning.encrypted_content"],
+  },
+} as const;
+
+export const openAiResponsesOptions = {
+  openai: {
+    store: false,
   },
 } as const;
 

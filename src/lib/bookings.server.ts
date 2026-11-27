@@ -19,41 +19,11 @@ export const bookingInputSchema = z.object({
 });
 export type BookingInput = z.infer<typeof bookingInputSchema>;
 
-export function clientIp(request: Request): string {
-  return (
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-real-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown"
-  );
-}
-
-async function admin() {
-  const { createSupabaseServerAdminClient } = await import("./public-media.server");
-  return createSupabaseServerAdminClient();
-}
-
 async function publicClient() {
   const { getSupabasePublicConfig, publicMediaClient } = await import("./public-media.server");
   const config = getSupabasePublicConfig();
   if (!config) throw new Error("Configuration Supabase publique indisponible.");
   return publicMediaClient(config.url, config.key);
-}
-
-/** Returns true when the caller is still under the limit (and records the hit). */
-export async function checkRateLimit(key: string, max: number, windowMinutes: number) {
-  const db = await admin();
-  const since = new Date(Date.now() - windowMinutes * 60_000).toISOString();
-  const { count, error: countError } = await db
-    .from("rate_limits")
-    .select("id", { count: "exact", head: true })
-    .eq("key", key)
-    .gte("created_at", since);
-  if (countError) throw new Error("Impossible de vérifier la limite de requêtes.");
-  if ((count ?? 0) >= max) return false;
-  const { error: insertError } = await db.from("rate_limits").insert({ key });
-  if (insertError) throw new Error("Impossible d'enregistrer la limite de requêtes.");
-  return true;
 }
 
 function bookingRow(input: BookingInput, source: "form" | "assistant") {

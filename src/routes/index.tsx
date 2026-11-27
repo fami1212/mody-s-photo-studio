@@ -332,8 +332,8 @@ function Index() {
       <Header />
       <ChatPanel
         mode="booking"
-        title="Guide tarifaire"
-        greeting="Salut ! Je peux répondre à une première question sur les tarifs. Pour une réservation ou pour continuer, je vous mets en relation avec Mody sur WhatsApp. Que souhaitez-vous savoir ?"
+        title="Assistant Mody"
+        greeting="Bonjour ! Je suis l’assistant de Mody Photography. Je peux vous renseigner sur les formules, les tarifs, les déplacements ou la réservation. Que souhaitez-vous savoir ?"
       />
 
       <main>
@@ -443,7 +443,7 @@ function Index() {
                     >
                       <img
                         src={image}
-                        alt={isPublished ? "Shooting récent de Mody" : frame.alt}
+                        alt={isPublished ? `Photo du shooting ${frame.title}` : frame.alt}
                         loading="lazy"
                         width={768}
                         height={1024}
@@ -461,9 +461,7 @@ function Index() {
                     >
                       {content}
                       <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                        <span className="text-sm font-bold">
-                          Shooting {String(index + 1).padStart(2, "0")}
-                        </span>
+                        <span className="truncate text-sm font-bold">{frame.title}</span>
                         <ArrowUpRight className="size-4" />
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">Voir la série</p>
@@ -492,19 +490,40 @@ function Index() {
         </section>
 
         {/* Services */}
-        <section id="services" className="scroll-mt-20 border-t border-foreground/15 px-5 py-12">
-          <div className="mx-auto grid max-w-[92rem] gap-5 md:grid-cols-3">
-            {services.map((s) => (
-              <div key={s.title} className={`rounded-lg p-7 ${s.cardClass}`}>
-                <h3 className="font-display text-2xl uppercase tracking-normal">{s.title}</h3>
-                <p
-                  className={`mt-3 max-w-[34ch] text-pretty text-sm leading-relaxed ${s.bodyClass}`}
-                >
-                  {s.body}
+        <section
+          id="services"
+          className="home-services scroll-mt-20 border-t border-foreground/15 px-5 py-14 sm:py-18"
+        >
+          <div className="mx-auto max-w-[92rem]">
+            <div className="mb-8 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase text-primary">
+                  02 / Les expériences
                 </p>
-                <p className={`mt-5 text-lg font-bold ${s.priceClass}`}>{s.price}</p>
+                <h2 className="font-display text-4xl uppercase leading-none text-balance sm:text-5xl">
+                  Des images pour vos moments.
+                </h2>
               </div>
-            ))}
+              <p className="max-w-[34ch] text-pretty text-sm leading-relaxed text-muted-foreground">
+                Une séance pensée autour de votre histoire, de votre style et de l’occasion.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {services.map((s) => (
+                <article
+                  key={s.title}
+                  className={`home-service-card flex min-h-52 flex-col rounded-2xl p-6 sm:p-7 ${s.cardClass}`}
+                >
+                  <h3 className="font-display text-2xl uppercase tracking-normal">{s.title}</h3>
+                  <p
+                    className={`mt-3 max-w-[34ch] text-pretty text-sm leading-relaxed ${s.bodyClass}`}
+                  >
+                    {s.body}
+                  </p>
+                  <p className={`mt-auto pt-5 text-lg font-bold ${s.priceClass}`}>{s.price}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -516,6 +535,9 @@ function Index() {
           <div className="mx-auto max-w-[92rem]">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
+                <p className="mb-3 text-xs font-bold uppercase text-cream/60">
+                  03 / Formules & tarifs
+                </p>
                 <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-normal text-primary-foreground">
                   <Sparkles aria-hidden="true" className="size-4" />
                   Tarifs officiels
@@ -594,7 +616,7 @@ function Index() {
             <div className="min-w-0">
               <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-bold uppercase tracking-normal text-cream">
                 <Send aria-hidden="true" className="size-4" />
-                Réservation
+                04 / Réservation
               </p>
               <h2 className="font-display text-5xl uppercase leading-none text-balance sm:text-7xl">
                 Votre prochain
@@ -636,6 +658,7 @@ function Index() {
                     className="h-12 min-w-0 w-full rounded-xl border-2 border-foreground bg-background px-4 text-base font-medium outline-none focus:ring-2 focus:ring-primary"
                     autoComplete="name"
                     placeholder="Votre nom"
+                    required
                   />
                 </label>
                 <label className="grid gap-2 text-sm font-bold">
@@ -649,6 +672,7 @@ function Index() {
                     type="tel"
                     autoComplete="tel"
                     placeholder="+212 ..."
+                    required
                   />
                 </label>
               </div>
@@ -711,40 +735,45 @@ function Index() {
 
               {feedback && (
                 <p
+                  role={feedbackType === "error" ? "alert" : "status"}
+                  aria-live={feedbackType === "error" ? "assertive" : "polite"}
                   className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${feedbackType === "success" ? "bg-mint text-cream" : "bg-primary text-primary-foreground"}`}
                 >
                   {feedback}
                 </p>
               )}
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="mt-5 grid gap-3">
                 <Button
                   type="submit"
-                  className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base"
+                  className="h-12 w-full min-w-0 rounded-full px-4 text-sm sm:text-base"
                 >
                   <Send aria-hidden="true" />
                   Envoyer ma demande
                 </Button>
-                <Button
-                  asChild
-                  variant="secondary"
-                  className="h-12 min-w-0 rounded-full px-4 text-sm sm:text-base sm:col-start-1"
-                >
-                  <a href={whatsappHref} target="_blank" rel="noreferrer">
-                    <MessageCircle aria-hidden="true" />
-                    WhatsApp Pro
-                  </a>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 rounded-full sm:col-start-2 sm:row-start-1"
-                  onClick={copyReservation}
-                  aria-label="Copier la demande"
-                >
-                  <Copy aria-hidden="true" />
-                  <span className="sm:hidden">Copier la demande</span>
-                </Button>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="h-12 min-w-0 rounded-full px-3 text-sm sm:px-4"
+                  >
+                    <a href={whatsappHref} target="_blank" rel="noreferrer">
+                      <MessageCircle aria-hidden="true" />
+                      WhatsApp Pro
+                    </a>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 rounded-full px-3"
+                    onClick={copyReservation}
+                    aria-label="Copier la demande"
+                    title="Copier la demande"
+                  >
+                    <Copy aria-hidden="true" />
+                    <span className="sr-only sm:not-sr-only">Copier</span>
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
@@ -758,6 +787,7 @@ function Index() {
           <div className="mx-auto max-w-[92rem]">
             <div className="grid items-center gap-8 md:grid-cols-2">
               <div>
+                <p className="mb-3 text-xs font-bold uppercase text-ink/60">05 / Contact</p>
                 <h2 className="font-display text-4xl uppercase leading-[0.9] tracking-normal text-balance text-ink sm:text-6xl">
                   Créons quelque
                   <br />
@@ -823,7 +853,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false);
   return (
     <header className="sticky top-0 z-40 border-b border-foreground/20 bg-background/95 backdrop-blur-md">
-      <div className="mx-auto grid max-w-[92rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-4 sm:flex sm:justify-between sm:px-10">
+      <div className="home-header-inner mx-auto grid max-w-[92rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:justify-between sm:px-10 sm:py-4">
         <Link to="/" className="min-w-0" aria-label="Mody Photography, accueil">
           <span className="inline-block rounded-full bg-ink px-3 py-1.5">
             <img src={modyLogo} alt="Mody Photography" className="h-7 w-auto" />
@@ -872,7 +902,7 @@ function Header() {
         <nav
           id="home-mobile-nav"
           aria-label="Navigation mobile"
-          className="grid border-t border-foreground/15 px-5 pb-5 pt-2 text-base font-medium lg:hidden"
+          className="home-mobile-nav grid border-t border-foreground/15 px-4 pb-4 pt-2 text-sm font-medium sm:px-5 sm:text-base lg:hidden"
         >
           <a href="#galerie" onClick={closeMenu} className="py-3">
             Portfolio
