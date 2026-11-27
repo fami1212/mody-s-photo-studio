@@ -373,10 +373,7 @@ export type Database = {
     }
     Functions: {
       is_booking_slot_available: {
-        Args: {
-          p_event_date: string
-          p_event_time: string
-        }
+        Args: { p_event_date: string; p_event_time: string }
         Returns: boolean
       }
     }
