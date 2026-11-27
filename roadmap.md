@@ -6,3 +6,4 @@
 - [ ] Give published shootings individual titles, descriptions and stable share images.
 - [ ] Maintain robots.txt for public discovery.
 - [ ] Generate sitemap XML after a public site URL exists (blocked: site not published).
+- [ ] Restore visitor and admin chatbot availability for the chosen production host without exposing server secrets.

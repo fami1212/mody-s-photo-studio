@@ -1,9 +1,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { MessageCircle, Send, X } from "lucide-react";
+import { MessageCircle, RotateCw, Send, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   mode: "booking" | "admin";
@@ -28,7 +29,7 @@ export function ChatPanel({ mode, title, greeting }: Props) {
       }),
     [mode],
   );
-  const { messages, sendMessage, status, error, stop } = useChat({ transport });
+  const { messages, sendMessage, status, error, stop, regenerate } = useChat({ transport });
   const busy = status === "submitted" || status === "streaming";
   const whatsappText = bookingInteractions.join("\n");
   const whatsappHref = useMemo(
@@ -107,12 +108,24 @@ export function ChatPanel({ mode, title, greeting }: Props) {
             )}
             {status === "submitted" && <p className="text-muted-foreground">…</p>}
             {mode === "booking" && (handoff || error) ? (
-              <div className="space-y-2 rounded-2xl border-2 border-foreground bg-secondary p-3">
+              <div role="alert" className="space-y-2 rounded-2xl border-2 border-foreground bg-secondary p-3">
                 <p className="leading-relaxed">
                   {handoff
                     ? "Pour poursuivre votre demande, Mody vous répond directement sur WhatsApp."
                     : "L’assistant est momentanément indisponible. Vous pouvez continuer directement avec Mody."}
                 </p>
+                {error && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void regenerate()}
+                  >
+                    <RotateCw aria-hidden="true" />
+                    Réessayer
+                  </Button>
+                )}
                 <a
                   href={whatsappHref}
                   target="_blank"
@@ -124,7 +137,19 @@ export function ChatPanel({ mode, title, greeting }: Props) {
                 </a>
               </div>
             ) : error ? (
-              <p className="text-destructive">Assistant indisponible pour le moment.</p>
+              <div role="alert" className="space-y-2 text-destructive">
+                <p>L’assistant est indisponible. Votre message est conservé.</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => void regenerate()}
+                >
+                  <RotateCw aria-hidden="true" />
+                  Réessayer
+                </Button>
+              </div>
             ) : null}
           </div>
           {!(mode === "booking" && handoff) && (
